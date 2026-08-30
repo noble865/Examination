@@ -6,9 +6,11 @@ local UserInputService = game:GetService("UserInputService")
 local Player = Players.LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
 
--- Tecla padrão para abrir/fechar o menu
+-- Teclas padrão
 local toggleKey = Enum.KeyCode.RightControl
+local tpToggleKey = Enum.KeyCode.V -- Tecla padrão para Third Person
 local isBinding = false
+local isBindingTP = false
 
 -- Remove versão anterior se já existir
 if PlayerGui:FindFirstChild("ShizukaExaminationUI") then
@@ -98,7 +100,6 @@ Sidebar.BackgroundColor3 = Color3.fromRGB(14, 14, 14)
 Sidebar.BorderSizePixel = 0
 Sidebar.Parent = MainFrame
 
--- Permitir arrastar também segurando na sidebar
 Sidebar.InputBegan:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 		dragging = true
@@ -119,7 +120,7 @@ Sidebar.InputChanged:Connect(function(input)
 	end
 end)
 
--- Botão Categoria: Main
+-- Botões das Abas
 local MainTabBtn = Instance.new("TextButton")
 MainTabBtn.Size = UDim2.new(1, -16, 0, 35)
 MainTabBtn.Position = UDim2.new(0, 8, 0, 10)
@@ -132,7 +133,6 @@ MainTabBtn.TextXAlignment = Enum.TextXAlignment.Left
 MainTabBtn.Parent = Sidebar
 local TabCorner1 = Instance.new("UICorner") TabCorner1.CornerRadius = UDim.new(0, 4) TabCorner1.Parent = MainTabBtn
 
--- Botão Categoria: Info
 local InfoTabBtn = Instance.new("TextButton")
 InfoTabBtn.Size = UDim2.new(1, -16, 0, 35)
 InfoTabBtn.Position = UDim2.new(0, 8, 0, 55)
@@ -145,7 +145,6 @@ InfoTabBtn.TextXAlignment = Enum.TextXAlignment.Left
 InfoTabBtn.Parent = Sidebar
 local TabCorner2 = Instance.new("UICorner") TabCorner2.CornerRadius = UDim.new(0, 4) TabCorner2.Parent = InfoTabBtn
 
--- Botão Categoria: Extras
 local ExtrasTabBtn = Instance.new("TextButton")
 ExtrasTabBtn.Size = UDim2.new(1, -16, 0, 35)
 ExtrasTabBtn.Position = UDim2.new(0, 8, 0, 100)
@@ -158,7 +157,6 @@ ExtrasTabBtn.TextXAlignment = Enum.TextXAlignment.Left
 ExtrasTabBtn.Parent = Sidebar
 local TabCorner3 = Instance.new("UICorner") TabCorner3.CornerRadius = UDim.new(0, 4) TabCorner3.Parent = ExtrasTabBtn
 
--- Botão Categoria: Keybind
 local KeybindTabBtn = Instance.new("TextButton")
 KeybindTabBtn.Size = UDim2.new(1, -16, 0, 35)
 KeybindTabBtn.Position = UDim2.new(0, 8, 0, 145)
@@ -209,10 +207,7 @@ EspButton.TextSize = 14
 EspButton.Font = Enum.Font.SourceSansBold
 EspButton.TextXAlignment = Enum.TextXAlignment.Left
 EspButton.Parent = MainContent
-
-local EspCorner = Instance.new("UICorner")
-EspCorner.CornerRadius = UDim.new(0, 6)
-EspCorner.Parent = EspButton
+local EspCorner = Instance.new("UICorner") EspCorner.CornerRadius = UDim.new(0, 6) EspCorner.Parent = EspButton
 
 -- Botão ESP Mobs
 local EspMobsButton = Instance.new("TextButton")
@@ -225,10 +220,7 @@ EspMobsButton.TextSize = 14
 EspMobsButton.Font = Enum.Font.SourceSansBold
 EspMobsButton.TextXAlignment = Enum.TextXAlignment.Left
 EspMobsButton.Parent = MainContent
-
-local EspMobsCorner = Instance.new("UICorner")
-EspMobsCorner.CornerRadius = UDim.new(0, 6)
-EspMobsCorner.Parent = EspMobsButton
+local EspMobsCorner = Instance.new("UICorner") EspMobsCorner.CornerRadius = UDim.new(0, 6) EspMobsCorner.Parent = EspMobsButton
 
 -- Botão Fullbright
 local FullbrightButton = Instance.new("TextButton")
@@ -241,10 +233,7 @@ FullbrightButton.TextSize = 14
 FullbrightButton.Font = Enum.Font.SourceSansBold
 FullbrightButton.TextXAlignment = Enum.TextXAlignment.Left
 FullbrightButton.Parent = MainContent
-
-local FullbrightCorner = Instance.new("UICorner")
-FullbrightCorner.CornerRadius = UDim.new(0, 6)
-FullbrightCorner.Parent = FullbrightButton
+local FullbrightCorner = Instance.new("UICorner") FullbrightCorner.CornerRadius = UDim.new(0, 6) FullbrightCorner.Parent = FullbrightButton
 
 -- Botão Third Person
 local ThirdPersonButton = Instance.new("TextButton")
@@ -257,10 +246,7 @@ ThirdPersonButton.TextSize = 14
 ThirdPersonButton.Font = Enum.Font.SourceSansBold
 ThirdPersonButton.TextXAlignment = Enum.TextXAlignment.Left
 ThirdPersonButton.Parent = MainContent
-
-local ThirdPersonCorner = Instance.new("UICorner")
-ThirdPersonCorner.CornerRadius = UDim.new(0, 6)
-ThirdPersonCorner.Parent = ThirdPersonButton
+local ThirdPersonCorner = Instance.new("UICorner") ThirdPersonCorner.CornerRadius = UDim.new(0, 6) ThirdPersonCorner.Parent = ThirdPersonButton
 
 -- Página 2: Info Content
 local InfoContent = Instance.new("Frame")
@@ -292,7 +278,6 @@ DiscordLabel.TextXAlignment = Enum.TextXAlignment.Left
 DiscordLabel.Parent = InfoContent
 local DiscordCorner = Instance.new("UICorner") DiscordCorner.CornerRadius = UDim.new(0, 6) DiscordCorner.Parent = DiscordLabel
 
--- Mensagem solicitada
 local MessageLabel = Instance.new("TextLabel")
 MessageLabel.Size = UDim2.new(1, -20, 0, 55)
 MessageLabel.Position = UDim2.new(0, 10, 0, 95)
@@ -324,7 +309,6 @@ ExtrasTitle.Font = Enum.Font.SourceSansBold
 ExtrasTitle.TextXAlignment = Enum.TextXAlignment.Left
 ExtrasTitle.Parent = ExtrasContent
 
--- Botão Noclip
 local NoclipButton = Instance.new("TextButton")
 NoclipButton.Size = UDim2.new(1, -20, 0, 32)
 NoclipButton.Position = UDim2.new(0, 10, 0, 50)
@@ -335,10 +319,7 @@ NoclipButton.TextSize = 14
 NoclipButton.Font = Enum.Font.SourceSansBold
 NoclipButton.TextXAlignment = Enum.TextXAlignment.Left
 NoclipButton.Parent = ExtrasContent
-
-local NoclipCorner = Instance.new("UICorner")
-NoclipCorner.CornerRadius = UDim.new(0, 6)
-NoclipCorner.Parent = NoclipButton
+local NoclipCorner = Instance.new("UICorner") NoclipCorner.CornerRadius = UDim.new(0, 6) NoclipCorner.Parent = NoclipButton
 
 -- Página 4: Keybind Content
 local KeybindContent = Instance.new("Frame")
@@ -358,7 +339,7 @@ KeybindTitle.Font = Enum.Font.SourceSansBold
 KeybindTitle.TextXAlignment = Enum.TextXAlignment.Left
 KeybindTitle.Parent = KeybindContent
 
--- Botão para Trocar a Tecla
+-- Botão para Trocar a Tecla do Menu
 local KeybindButton = Instance.new("TextButton")
 KeybindButton.Size = UDim2.new(1, -20, 0, 32)
 KeybindButton.Position = UDim2.new(0, 10, 0, 50)
@@ -369,12 +350,22 @@ KeybindButton.TextSize = 14
 KeybindButton.Font = Enum.Font.SourceSansBold
 KeybindButton.TextXAlignment = Enum.TextXAlignment.Left
 KeybindButton.Parent = KeybindContent
+local KeybindCorner = Instance.new("UICorner") KeybindCorner.CornerRadius = UDim.new(0, 6) KeybindCorner.Parent = KeybindButton
 
-local KeybindCorner = Instance.new("UICorner")
-KeybindCorner.CornerRadius = UDim.new(0, 6)
-KeybindCorner.Parent = KeybindButton
+-- Botão para Trocar a Tecla do Third Person
+local TPKeybindButton = Instance.new("TextButton")
+TPKeybindButton.Size = UDim2.new(1, -20, 0, 32)
+TPKeybindButton.Position = UDim2.new(0, 10, 0, 90)
+TPKeybindButton.BackgroundColor3 = Color3.fromRGB(24, 24, 24)
+TPKeybindButton.Text = "  Third Person PC: [ " .. tpToggleKey.Name .. " ]"
+TPKeybindButton.TextColor3 = Color3.fromRGB(200, 200, 200)
+TPKeybindButton.TextSize = 14
+TPKeybindButton.Font = Enum.Font.SourceSansBold
+TPKeybindButton.TextXAlignment = Enum.TextXAlignment.Left
+TPKeybindButton.Parent = KeybindContent
+local TPKeybindCorner = Instance.new("UICorner") TPKeybindCorner.CornerRadius = UDim.new(0, 6) TPKeybindCorner.Parent = TPKeybindButton
 
--- Botão Lateral para Reabrir (Mobile/Backup)
+-- Botão Lateral para Reabrir
 local OpenButton = Instance.new("TextButton")
 OpenButton.Name = "OpenButton"
 OpenButton.Size = UDim2.new(0, 40, 0, 40)
@@ -386,43 +377,57 @@ OpenButton.TextSize = 14
 OpenButton.Font = Enum.Font.SourceSansBold
 OpenButton.Visible = false
 OpenButton.Parent = ScreenGui
+local OpenUICorner = Instance.new("UICorner") OpenUICorner.CornerRadius = UDim.new(0, 8) OpenUICorner.Parent = OpenButton
 
-local OpenUICorner = Instance.new("UICorner")
-OpenUICorner.CornerRadius = UDim.new(0, 8)
-OpenUICorner.Parent = OpenButton
-
--- Lógica ESP Player (Ciano Escuro)
+-- Lógica ESP Player (Corrigida para Respawn)
 local espEnabled = false
 local highlights = {}
 
-local function updateESPState()
-	for _, plr in ipairs(Players:GetPlayers()) do
-		if plr ~= Player then
-			if espEnabled then
-				if plr.Character and not highlights[plr] then
-					local hl = Instance.new("Highlight")
-					hl.Name = "ShizukaESP"
-					hl.FillColor = Color3.fromRGB(0, 139, 139)
-					hl.OutlineColor = Color3.fromRGB(255, 255, 255)
-					hl.FillTransparency = 0.5
-					hl.Parent = plr.Character
-					highlights[plr] = hl
-				end
-			else
-				if highlights[plr] then
-					highlights[plr]:Destroy()
-					highlights[plr] = nil
-				end
-			end
-		end
-	end
-end
-
-Players.PlayerRemoving:Connect(function(plr)
+local function removeHighlight(plr)
 	if highlights[plr] then
 		highlights[plr]:Destroy()
 		highlights[plr] = nil
 	end
+end
+
+local function applyPlayerESP(plr)
+	if not espEnabled or plr == Player then return end
+	local character = plr.Character
+	if not character then return end
+	
+	-- Se já houver um highlight ativo no personagem atual, não cria outro
+	if highlights[plr] and highlights[plr].Parent == character then return end
+	
+	removeHighlight(plr)
+
+	local hl = Instance.new("Highlight")
+	hl.Name = "ShizukaESP"
+	hl.FillColor = Color3.fromRGB(0, 139, 139)
+	hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+	hl.FillTransparency = 0.5
+	hl.Parent = character
+	highlights[plr] = hl
+end
+
+local function setupPlayer(plr)
+	if plr == Player then return end
+	
+	plr.CharacterAdded:Connect(function(char)
+		task.wait(0.2) -- Aguarda carregamento do novo modelo ao renascer
+		removeHighlight(plr)
+		if espEnabled then
+			applyPlayerESP(plr)
+		end
+	end)
+end
+
+for _, plr in ipairs(Players:GetPlayers()) do
+	setupPlayer(plr)
+end
+Players.PlayerAdded:Connect(setupPlayer)
+
+Players.PlayerRemoving:Connect(function(plr)
+	removeHighlight(plr)
 end)
 
 EspButton.MouseButton1Click:Connect(function()
@@ -430,24 +435,25 @@ EspButton.MouseButton1Click:Connect(function()
 	if espEnabled then
 		EspButton.Text = "  ESP Player: [ ON ]"
 		EspButton.TextColor3 = Color3.fromRGB(80, 255, 80)
+		for _, plr in ipairs(Players:GetPlayers()) do
+			applyPlayerESP(plr)
+		end
 	else
 		EspButton.Text = "  ESP Player: [ OFF ]"
 		EspButton.TextColor3 = Color3.fromRGB(200, 200, 200)
+		for plr, _ in pairs(highlights) do
+			removeHighlight(plr)
+		end
 	end
-	updateESPState()
 end)
 
 RunService.RenderStepped:Connect(function()
 	if espEnabled then
 		for _, plr in ipairs(Players:GetPlayers()) do
-			if plr ~= Player and plr.Character and not highlights[plr] then
-				local hl = Instance.new("Highlight")
-				hl.Name = "ShizukaESP"
-				hl.FillColor = Color3.fromRGB(0, 139, 139)
-				hl.OutlineColor = Color3.fromRGB(255, 255, 255)
-				hl.FillTransparency = 0.5
-				hl.Parent = plr.Character
-				highlights[plr] = hl
+			if plr ~= Player and plr.Character then
+				if not highlights[plr] or highlights[plr].Parent ~= plr.Character then
+					applyPlayerESP(plr)
+				end
 			end
 		end
 	end
@@ -596,7 +602,7 @@ local originalCameraMode = Player.CameraMode
 local originalMinZoom = Player.CameraMinZoomDistance
 local originalMaxZoom = Player.CameraMaxZoomDistance
 
-ThirdPersonButton.MouseButton1Click:Connect(function()
+local function toggleThirdPerson()
 	thirdPersonEnabled = not thirdPersonEnabled
 	if thirdPersonEnabled then
 		ThirdPersonButton.Text = "  Third Person: [ ON ]"
@@ -617,7 +623,9 @@ ThirdPersonButton.MouseButton1Click:Connect(function()
 		Player.CameraMinZoomDistance = originalMinZoom
 		Player.CameraMaxZoomDistance = originalMaxZoom
 	end
-end)
+end
+
+ThirdPersonButton.MouseButton1Click:Connect(toggleThirdPerson)
 
 -- Lógica Noclip
 local noclipEnabled = false
@@ -759,12 +767,19 @@ OpenButton.MouseButton1Click:Connect(function()
 	toggleUI(true)
 end)
 
--- Lógica do Keybind (Alteração + Detecção de Pressionamento)
+-- Configurações de Rebind de Teclas
 KeybindButton.MouseButton1Click:Connect(function()
-	if isBinding then return end
+	if isBinding or isBindingTP then return end
 	isBinding = true
 	KeybindButton.Text = "  Pressione qualquer tecla..."
 	KeybindButton.TextColor3 = Color3.fromRGB(255, 200, 80)
+end)
+
+TPKeybindButton.MouseButton1Click:Connect(function()
+	if isBinding or isBindingTP then return end
+	isBindingTP = true
+	TPKeybindButton.Text = "  Pressione qualquer tecla..."
+	TPKeybindButton.TextColor3 = Color3.fromRGB(255, 200, 80)
 end)
 
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
@@ -778,9 +793,24 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 		return
 	end
 	
+	if isBindingTP then
+		if input.UserInputType == Enum.UserInputType.Keyboard then
+			tpToggleKey = input.KeyCode
+			isBindingTP = false
+			TPKeybindButton.Text = "  Third Person PC: [ " .. tpToggleKey.Name .. " ]"
+			TPKeybindButton.TextColor3 = Color3.fromRGB(200, 200, 200)
+		end
+		return
+	end
+	
 	if gameProcessed then return end
 	
-	if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == toggleKey then
-		toggleUI(not MainFrame.Visible)
+	if input.UserInputType == Enum.UserInputType.Keyboard then
+		if input.KeyCode == toggleKey then
+			toggleUI(not MainFrame.Visible)
+		elseif input.KeyCode == tpToggleKey then
+			toggleThirdPerson()
+		end
 	end
 end)
+2 
