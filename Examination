@@ -1,678 +1,650 @@
-local Players = game:GetService("Players")
-local TweenService = game:GetService("TweenService")
-local RunService = game:GetService("RunService")
-local Lighting = game:GetService("Lighting")
-local UserInputService = game:GetService("UserInputService")
-local Player = Players.LocalPlayer
-local PlayerGui = Player:WaitForChild("PlayerGui")
+local _0x1 = game:GetService("Players")
+local _0x2 = game:GetService("TweenService")
+local _0x3 = game:GetService("RunService")
+local _0x4 = game:GetService("Lighting")
+local _0x5 = game:GetService("UserInputService")
+local _0x6 = _0x1.LocalPlayer
+local _0x7 = _0x6:WaitForChild("PlayerGui")
 
--- Remove versão anterior se já existir
-if PlayerGui:FindFirstChild("ShizukaExaminationUI") then
-	PlayerGui.ShizukaExaminationUI:Destroy()
+if _0x7:FindFirstChild("ShizukaExaminationUI") then
+	_0x7.ShizukaExaminationUI:Destroy()
 end
 
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "ShizukaExaminationUI"
-ScreenGui.ResetOnSpawn = false
-ScreenGui.Parent = PlayerGui
+local _0x8 = Instance.new("ScreenGui")
+_0x8.Name = "ShizukaExaminationUI"
+_0x8.ResetOnSpawn = false
+_0x8.Parent = _0x7
 
--- Janela Principal
-local MainFrame = Instance.new("Frame")
-MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 480, 0, 320)
-MainFrame.Position = UDim2.new(0.5, -240, 0.5, -160)
-MainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
-MainFrame.BorderSizePixel = 0
-MainFrame.Parent = ScreenGui
+local _0x9 = Instance.new("Frame")
+_0x9.Name = "MainFrame"
+_0x9.Size = UDim2.new(0, 480, 0, 320)
+_0x9.Position = UDim2.new(0.5, -240, 0.5, -160)
+_0x9.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
+_0x9.BorderSizePixel = 0
+_0x9.Parent = _0x8
 
-local UICorner = Instance.new("UICorner")
-UICorner.CornerRadius = UDim.new(0, 6)
-UICorner.Parent = MainFrame
+local _0xA = Instance.new("UICorner")
+_0xA.CornerRadius = UDim.new(0, 6)
+_0xA.Parent = _0x9
 
--- Topo / Título do Menu
-local TitleLabel = Instance.new("TextLabel")
-TitleLabel.Size = UDim2.new(1, -50, 0, 40)
-TitleLabel.Position = UDim2.new(0, 15, 0, 0)
-TitleLabel.BackgroundTransparency = 1
-TitleLabel.Text = "shizuka examination"
-TitleLabel.TextColor3 = Color3.fromRGB(230, 230, 230)
-TitleLabel.TextSize = 15
-TitleLabel.Font = Enum.Font.SourceSansBold
-TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
-TitleLabel.Parent = MainFrame
+local _0xB = Instance.new("TextLabel")
+_0xB.Size = UDim2.new(1, -50, 0, 40)
+_0xB.Position = UDim2.new(0, 15, 0, 0)
+_0xB.BackgroundTransparency = 1
+_0xB.Text = "shizu examination 1.0"
+_0xB.TextColor3 = Color3.fromRGB(230, 230, 230)
+_0xB.TextSize = 15
+_0xB.Font = Enum.Font.SourceSansBold
+_0xB.TextXAlignment = Enum.TextXAlignment.Left
+_0xB.Parent = _0x9
 
--- Sistema de Arrastar a Janela (Draggable por TitleLabel ou Sidebar)
-local dragging, dragInput, dragStart, startPos
+local _0xC, _0xD, _0xE, _0xF
 
-local function updateInput(input)
-	local delta = input.Position - dragStart
-	MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+local function _0x10(_0x11)
+	local _0x12 = _0x11.Position - _0xE
+	_0x9.Position = UDim2.new(_0xF.X.Scale, _0xF.X.Offset + _0x12.X, _0xF.Y.Scale, _0xF.Y.Offset + _0x12.Y)
 end
 
-TitleLabel.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-		dragging = true
-		dragStart = input.Position
-		startPos = MainFrame.Position
+_0xB.InputBegan:Connect(function(_0x11)
+	if _0x11.UserInputType == Enum.UserInputType.MouseButton1 or _0x11.UserInputType == Enum.UserInputType.Touch then
+		_0xC = true
+		_0xE = _0x11.Position
+		_0xF = _0x9.Position
 		
-		input.Changed:Connect(function()
-			if input.UserInputState == Enum.UserInputState.End then
-				dragging = false
+		_0x11.Changed:Connect(function()
+			if _0x11.UserInputState == Enum.UserInputState.End then
+				_0xC = false
 			end
 		end)
 	end
 end)
 
-TitleLabel.InputChanged:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-		dragInput = input
+_0xB.InputChanged:Connect(function(_0x11)
+	if _0x11.UserInputType == Enum.UserInputType.MouseMovement or _0x11.UserInputType == Enum.UserInputType.Touch then
+		_0xD = _0x11
 	end
 end)
 
-UserInputService.InputChanged:Connect(function(input)
-	if input == dragInput and dragging then
-		updateInput(input)
+_0x5.InputChanged:Connect(function(_0x11)
+	if _0x11 == _0xD and _0xC then
+		_0x10(_0x11)
 	end
 end)
 
--- Botão de Fechar
-local CloseButton = Instance.new("TextButton")
-CloseButton.Size = UDim2.new(0, 30, 0, 30)
-CloseButton.Position = UDim2.new(1, -35, 0, 5)
-CloseButton.BackgroundTransparency = 1
-CloseButton.Text = "×"
-CloseButton.TextColor3 = Color3.fromRGB(160, 160, 160)
-CloseButton.TextSize = 20
-CloseButton.Font = Enum.Font.SourceSansBold
-CloseButton.Parent = MainFrame
+local _0x13 = Instance.new("TextButton")
+_0x13.Size = UDim2.new(0, 30, 0, 30)
+_0x13.Position = UDim2.new(1, -35, 0, 5)
+_0x13.BackgroundTransparency = 1
+_0x13.Text = "×"
+_0x13.TextColor3 = Color3.fromRGB(160, 160, 160)
+_0x13.TextSize = 20
+_0x13.Font = Enum.Font.SourceSansBold
+_0x13.Parent = _0x9
 
--- Sidebar Esquerda
-local Sidebar = Instance.new("Frame")
-Sidebar.Size = UDim2.new(0, 130, 1, -45)
-Sidebar.Position = UDim2.new(0, 0, 0, 45)
-Sidebar.BackgroundColor3 = Color3.fromRGB(14, 14, 14)
-Sidebar.BorderSizePixel = 0
-Sidebar.Parent = MainFrame
+local _0x14 = Instance.new("Frame")
+_0x14.Size = UDim2.new(0, 130, 1, -45)
+_0x14.Position = UDim2.new(0, 0, 0, 45)
+_0x14.BackgroundColor3 = Color3.fromRGB(14, 14, 14)
+_0x14.BorderSizePixel = 0
+_0x14.Parent = _0x9
 
--- Permitir arrastar também segurando na sidebar
-Sidebar.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-		dragging = true
-		dragStart = input.Position
-		startPos = MainFrame.Position
+_0x14.InputBegan:Connect(function(_0x11)
+	if _0x11.UserInputType == Enum.UserInputType.MouseButton1 or _0x11.UserInputType == Enum.UserInputType.Touch then
+		_0xC = true
+		_0xE = _0x11.Position
+		_0xF = _0x9.Position
 		
-		input.Changed:Connect(function()
-			if input.UserInputState == Enum.UserInputState.End then
-				dragging = false
+		_0x11.Changed:Connect(function()
+			if _0x11.UserInputState == Enum.UserInputState.End then
+				_0xC = false
 			end
 		end)
 	end
 end)
 
-Sidebar.InputChanged:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-		dragInput = input
+_0x14.InputChanged:Connect(function(_0x11)
+	if _0x11.UserInputType == Enum.UserInputType.MouseMovement or _0x11.UserInputType == Enum.UserInputType.Touch then
+		_0xD = _0x11
 	end
 end)
 
--- Botão Categoria: Main
-local MainTabBtn = Instance.new("TextButton")
-MainTabBtn.Size = UDim2.new(1, -16, 0, 35)
-MainTabBtn.Position = UDim2.new(0, 8, 0, 10)
-MainTabBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
-MainTabBtn.Text = "  Main"
-MainTabBtn.TextColor3 = Color3.fromRGB(240, 240, 240)
-MainTabBtn.TextSize = 14
-MainTabBtn.Font = Enum.Font.SourceSansBold
-MainTabBtn.TextXAlignment = Enum.TextXAlignment.Left
-MainTabBtn.Parent = Sidebar
-local TabCorner1 = Instance.new("UICorner") TabCorner1.CornerRadius = UDim.new(0, 4) TabCorner1.Parent = MainTabBtn
+local _0x15 = Instance.new("TextButton")
+_0x15.Size = UDim2.new(1, -16, 0, 35)
+_0x15.Position = UDim2.new(0, 8, 0, 10)
+_0x15.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
+_0x15.Text = "  Main"
+_0x15.TextColor3 = Color3.fromRGB(240, 240, 240)
+_0x15.TextSize = 14
+_0x15.Font = Enum.Font.SourceSansBold
+_0x15.TextXAlignment = Enum.TextXAlignment.Left
+_0x15.Parent = _0x14
+local _0x16 = Instance.new("UICorner") _0x16.CornerRadius = UDim.new(0, 4) _0x16.Parent = _0x15
 
--- Botão Categoria: Info
-local InfoTabBtn = Instance.new("TextButton")
-InfoTabBtn.Size = UDim2.new(1, -16, 0, 35)
-InfoTabBtn.Position = UDim2.new(0, 8, 0, 55)
-InfoTabBtn.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
-InfoTabBtn.Text = "  Info"
-InfoTabBtn.TextColor3 = Color3.fromRGB(160, 160, 160)
-InfoTabBtn.TextSize = 14
-InfoTabBtn.Font = Enum.Font.SourceSansBold
-InfoTabBtn.TextXAlignment = Enum.TextXAlignment.Left
-InfoTabBtn.Parent = Sidebar
-local TabCorner2 = Instance.new("UICorner") TabCorner2.CornerRadius = UDim.new(0, 4) TabCorner2.Parent = InfoTabBtn
+local _0x17 = Instance.new("TextButton")
+_0x17.Size = UDim2.new(1, -16, 0, 35)
+_0x17.Position = UDim2.new(0, 8, 0, 55)
+_0x17.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+_0x17.Text = "  Info"
+_0x17.TextColor3 = Color3.fromRGB(160, 160, 160)
+_0x17.TextSize = 14
+_0x17.Font = Enum.Font.SourceSansBold
+_0x17.TextXAlignment = Enum.TextXAlignment.Left
+_0x17.Parent = _0x14
+local _0x18 = Instance.new("UICorner") _0x18.CornerRadius = UDim.new(0, 4) _0x18.Parent = _0x17
 
--- Botão Categoria: Extras
-local ExtrasTabBtn = Instance.new("TextButton")
-ExtrasTabBtn.Size = UDim2.new(1, -16, 0, 35)
-ExtrasTabBtn.Position = UDim2.new(0, 8, 0, 100)
-ExtrasTabBtn.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
-ExtrasTabBtn.Text = "  Extras"
-ExtrasTabBtn.TextColor3 = Color3.fromRGB(160, 160, 160)
-ExtrasTabBtn.TextSize = 14
-ExtrasTabBtn.Font = Enum.Font.SourceSansBold
-ExtrasTabBtn.TextXAlignment = Enum.TextXAlignment.Left
-ExtrasTabBtn.Parent = Sidebar
-local TabCorner3 = Instance.new("UICorner") TabCorner3.CornerRadius = UDim.new(0, 4) TabCorner3.Parent = ExtrasTabBtn
+local _0x19 = Instance.new("TextButton")
+_0x19.Size = UDim2.new(1, -16, 0, 35)
+_0x19.Position = UDim2.new(0, 8, 0, 100)
+_0x19.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+_0x19.Text = "  Extras"
+_0x19.TextColor3 = Color3.fromRGB(160, 160, 160)
+_0x19.TextSize = 14
+_0x19.Font = Enum.Font.SourceSansBold
+_0x19.TextXAlignment = Enum.TextXAlignment.Left
+_0x19.Parent = _0x14
+local _0x1A = Instance.new("UICorner") _0x1A.CornerRadius = UDim.new(0, 4) _0x1A.Parent = _0x19
 
--- Container de Conteúdo
-local ContentContainer = Instance.new("Frame")
-ContentContainer.Size = UDim2.new(1, -135, 1, -55)
-ContentContainer.Position = UDim2.new(0, 135, 0, 50)
-ContentContainer.BackgroundTransparency = 1
-ContentContainer.Parent = MainFrame
+local _0x1B = Instance.new("Frame")
+_0x1B.Size = UDim2.new(1, -135, 1, -55)
+_0x1B.Position = UDim2.new(0, 135, 0, 50)
+_0x1B.BackgroundTransparency = 1
+_0x1B.Parent = _0x9
 
--- Página 1: Main Content
-local MainContent = Instance.new("ScrollingFrame")
-MainContent.Size = UDim2.new(1, 0, 1, 0)
-MainContent.BackgroundTransparency = 1
-MainContent.Visible = true
-MainContent.CanvasSize = UDim2.new(0, 0, 0, 205)
-MainContent.ScrollBarThickness = 4
-MainContent.Parent = ContentContainer
+local _0x1C = Instance.new("ScrollingFrame")
+_0x1C.Size = UDim2.new(1, 0, 1, 0)
+_0x1C.BackgroundTransparency = 1
+_0x1C.Visible = true
+_0x1C.CanvasSize = UDim2.new(0, 0, 0, 205)
+_0x1C.ScrollBarThickness = 4
+_0x1C.Parent = _0x1B
 
-local MainText = Instance.new("TextLabel")
-MainText.Size = UDim2.new(1, 0, 0, 30)
-MainText.Position = UDim2.new(0, 10, 0, 5)
-MainText.BackgroundTransparency = 1
-MainText.Text = "shizu examination 1.0"
-MainText.TextColor3 = Color3.fromRGB(200, 200, 200)
-MainText.TextSize = 15
-MainText.Font = Enum.Font.SourceSansBold
-MainText.TextXAlignment = Enum.TextXAlignment.Left
-MainText.Parent = MainContent
+local _0x1D = Instance.new("TextLabel")
+_0x1D.Size = UDim2.new(1, 0, 0, 30)
+_0x1D.Position = UDim2.new(0, 10, 0, 5)
+_0x1D.BackgroundTransparency = 1
+_0x1D.Text = "shizu examination 1.0"
+_0x1D.TextColor3 = Color3.fromRGB(200, 200, 200)
+_0x1D.TextSize = 15
+_0x1D.Font = Enum.Font.SourceSansBold
+_0x1D.TextXAlignment = Enum.TextXAlignment.Left
+_0x1D.Parent = _0x1C
 
--- Botão ESP Player
-local EspButton = Instance.new("TextButton")
-EspButton.Size = UDim2.new(1, -20, 0, 32)
-EspButton.Position = UDim2.new(0, 10, 0, 40)
-EspButton.BackgroundColor3 = Color3.fromRGB(24, 24, 24)
-EspButton.Text = "  ESP Player: [ OFF ]"
-EspButton.TextColor3 = Color3.fromRGB(200, 200, 200)
-EspButton.TextSize = 14
-EspButton.Font = Enum.Font.SourceSansBold
-EspButton.TextXAlignment = Enum.TextXAlignment.Left
-EspButton.Parent = MainContent
+local _0x1E = Instance.new("TextButton")
+_0x1E.Size = UDim2.new(1, -20, 0, 32)
+_0x1E.Position = UDim2.new(0, 10, 0, 40)
+_0x1E.BackgroundColor3 = Color3.fromRGB(24, 24, 24)
+_0x1E.Text = "  ESP Player: [ OFF ]"
+_0x1E.TextColor3 = Color3.fromRGB(200, 200, 200)
+_0x1E.TextSize = 14
+_0x1E.Font = Enum.Font.SourceSansBold
+_0x1E.TextXAlignment = Enum.TextXAlignment.Left
+_0x1E.Parent = _0x1C
 
-local EspCorner = Instance.new("UICorner")
-EspCorner.CornerRadius = UDim.new(0, 6)
-EspCorner.Parent = EspButton
+local _0x1F = Instance.new("UICorner")
+_0x1F.CornerRadius = UDim.new(0, 6)
+_0x1F.Parent = _0x1E
 
--- Botão ESP Mobs
-local EspMobsButton = Instance.new("TextButton")
-EspMobsButton.Size = UDim2.new(1, -20, 0, 32)
-EspMobsButton.Position = UDim2.new(0, 10, 0, 77)
-EspMobsButton.BackgroundColor3 = Color3.fromRGB(24, 24, 24)
-EspMobsButton.Text = "  ESP Mobs: [ OFF ]"
-EspMobsButton.TextColor3 = Color3.fromRGB(200, 200, 200)
-EspMobsButton.TextSize = 14
-EspMobsButton.Font = Enum.Font.SourceSansBold
-EspMobsButton.TextXAlignment = Enum.TextXAlignment.Left
-EspMobsButton.Parent = MainContent
+local _0x20 = Instance.new("TextButton")
+_0x20.Size = UDim2.new(1, -20, 0, 32)
+_0x20.Position = UDim2.new(0, 10, 0, 77)
+_0x20.BackgroundColor3 = Color3.fromRGB(24, 24, 24)
+_0x20.Text = "  ESP Mobs: [ OFF ]"
+_0x20.TextColor3 = Color3.fromRGB(200, 200, 200)
+_0x20.TextSize = 14
+_0x20.Font = Enum.Font.SourceSansBold
+_0x20.TextXAlignment = Enum.TextXAlignment.Left
+_0x20.Parent = _0x1C
 
-local EspMobsCorner = Instance.new("UICorner")
-EspMobsCorner.CornerRadius = UDim.new(0, 6)
-EspMobsCorner.Parent = EspMobsButton
+local _0x21 = Instance.new("UICorner")
+_0x21.CornerRadius = UDim.new(0, 6)
+_0x21.Parent = _0x20
 
--- Botão Fullbright
-local FullbrightButton = Instance.new("TextButton")
-FullbrightButton.Size = UDim2.new(1, -20, 0, 32)
-FullbrightButton.Position = UDim2.new(0, 10, 0, 114)
-FullbrightButton.BackgroundColor3 = Color3.fromRGB(24, 24, 24)
-FullbrightButton.Text = "  Fullbright: [ OFF ]"
-FullbrightButton.TextColor3 = Color3.fromRGB(200, 200, 200)
-FullbrightButton.TextSize = 14
-FullbrightButton.Font = Enum.Font.SourceSansBold
-FullbrightButton.TextXAlignment = Enum.TextXAlignment.Left
-FullbrightButton.Parent = MainContent
+local _0x22 = Instance.new("TextButton")
+_0x22.Size = UDim2.new(1, -20, 0, 32)
+_0x22.Position = UDim2.new(0, 10, 0, 114)
+_0x22.BackgroundColor3 = Color3.fromRGB(24, 24, 24)
+_0x22.Text = "  Fullbright: [ OFF ]"
+_0x22.TextColor3 = Color3.fromRGB(200, 200, 200)
+_0x22.TextSize = 14
+_0x22.Font = Enum.Font.SourceSansBold
+_0x22.TextXAlignment = Enum.TextXAlignment.Left
+_0x22.Parent = _0x1C
 
-local FullbrightCorner = Instance.new("UICorner")
-FullbrightCorner.CornerRadius = UDim.new(0, 6)
-FullbrightCorner.Parent = FullbrightButton
+local _0x23 = Instance.new("UICorner")
+_0x23.CornerRadius = UDim.new(0, 6)
+_0x23.Parent = _0x22
 
--- Botão Third Person
-local ThirdPersonButton = Instance.new("TextButton")
-ThirdPersonButton.Size = UDim2.new(1, -20, 0, 32)
-ThirdPersonButton.Position = UDim2.new(0, 10, 0, 151)
-ThirdPersonButton.BackgroundColor3 = Color3.fromRGB(24, 24, 24)
-ThirdPersonButton.Text = "  Third Person: [ OFF ]"
-ThirdPersonButton.TextColor3 = Color3.fromRGB(200, 200, 200)
-ThirdPersonButton.TextSize = 14
-ThirdPersonButton.Font = Enum.Font.SourceSansBold
-ThirdPersonButton.TextXAlignment = Enum.TextXAlignment.Left
-ThirdPersonButton.Parent = MainContent
+local _0x24 = Instance.new("TextButton")
+_0x24.Size = UDim2.new(1, -20, 0, 32)
+_0x24.Position = UDim2.new(0, 10, 0, 151)
+_0x24.BackgroundColor3 = Color3.fromRGB(24, 24, 24)
+_0x24.Text = "  Third Person: [ OFF ]"
+_0x24.TextColor3 = Color3.fromRGB(200, 200, 200)
+_0x24.TextSize = 14
+_0x24.Font = Enum.Font.SourceSansBold
+_0x24.TextXAlignment = Enum.TextXAlignment.Left
+_0x24.Parent = _0x1C
 
-local ThirdPersonCorner = Instance.new("UICorner")
-ThirdPersonCorner.CornerRadius = UDim.new(0, 6)
-ThirdPersonCorner.Parent = ThirdPersonButton
+local _0x25 = Instance.new("UICorner")
+_0x25.CornerRadius = UDim.new(0, 6)
+_0x25.Parent = _0x24
 
--- Página 2: Info Content
-local InfoContent = Instance.new("Frame")
-InfoContent.Size = UDim2.new(1, 0, 1, 0)
-InfoContent.BackgroundTransparency = 1
-InfoContent.Visible = false
-InfoContent.Parent = ContentContainer
+local _0x26 = Instance.new("Frame")
+_0x26.Size = UDim2.new(1, 0, 1, 0)
+_0x26.BackgroundTransparency = 1
+_0x26.Visible = false
+_0x26.Parent = _0x1B
 
-local InfoTitle = Instance.new("TextLabel")
-InfoTitle.Size = UDim2.new(1, 0, 0, 30)
-InfoTitle.Position = UDim2.new(0, 10, 0, 10)
-InfoTitle.BackgroundTransparency = 1
-InfoTitle.Text = "Informações do Script"
-InfoTitle.TextColor3 = Color3.fromRGB(240, 240, 240)
-InfoTitle.TextSize = 16
-InfoTitle.Font = Enum.Font.SourceSansBold
-InfoTitle.TextXAlignment = Enum.TextXAlignment.Left
-InfoTitle.Parent = InfoContent
+local _0x27 = Instance.new("TextLabel")
+_0x27.Size = UDim2.new(1, 0, 0, 30)
+_0x27.Position = UDim2.new(0, 10, 0, 10)
+_0x27.BackgroundTransparency = 1
+_0x27.Text = "Informações do Script"
+_0x27.TextColor3 = Color3.fromRGB(240, 240, 240)
+_0x27.TextSize = 16
+_0x27.Font = Enum.Font.SourceSansBold
+_0x27.TextXAlignment = Enum.TextXAlignment.Left
+_0x27.Parent = _0x26
 
-local DiscordLabel = Instance.new("TextLabel")
-DiscordLabel.Size = UDim2.new(1, -20, 0, 35)
-DiscordLabel.Position = UDim2.new(0, 10, 0, 50)
-DiscordLabel.BackgroundColor3 = Color3.fromRGB(24, 24, 24)
-DiscordLabel.Text = "  Discord: shizuuw"
-DiscordLabel.TextColor3 = Color3.fromRGB(138, 180, 248)
-DiscordLabel.TextSize = 14
-DiscordLabel.Font = Enum.Font.SourceSansBold
-DiscordLabel.TextXAlignment = Enum.TextXAlignment.Left
-DiscordLabel.Parent = InfoContent
-local DiscordCorner = Instance.new("UICorner") DiscordCorner.CornerRadius = UDim.new(0, 6) DiscordCorner.Parent = DiscordLabel
+local _0x28 = Instance.new("TextLabel")
+_0x28.Size = UDim2.new(1, -20, 0, 35)
+_0x28.Position = UDim2.new(0, 10, 0, 50)
+_0x28.BackgroundColor3 = Color3.fromRGB(24, 24, 24)
+_0x28.Text = "  Discord: shizuuw"
+_0x28.TextColor3 = Color3.fromRGB(138, 180, 248)
+_0x28.TextSize = 14
+_0x28.Font = Enum.Font.SourceSansBold
+_0x28.TextXAlignment = Enum.TextXAlignment.Left
+_0x28.Parent = _0x26
+local _0x29 = Instance.new("UICorner") _0x29.CornerRadius = UDim.new(0, 6) _0x29.Parent = _0x28
 
--- Mensagem solicitada
-local MessageLabel = Instance.new("TextLabel")
-MessageLabel.Size = UDim2.new(1, -20, 0, 55)
-MessageLabel.Position = UDim2.new(0, 10, 0, 95)
-MessageLabel.BackgroundColor3 = Color3.fromRGB(24, 24, 24)
-MessageLabel.Text = "  I tried to do if something is missing\n  tell me or give me idea :3\n  i love cats 🐾"
-MessageLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-MessageLabel.TextSize = 12
-MessageLabel.Font = Enum.Font.SourceSans
-MessageLabel.TextXAlignment = Enum.TextXAlignment.Left
-MessageLabel.TextYAlignment = Enum.TextYAlignment.Center
-MessageLabel.Parent = InfoContent
-local MessageCorner = Instance.new("UICorner") MessageCorner.CornerRadius = UDim.new(0, 6) MessageCorner.Parent = MessageLabel
+local _0x2A = Instance.new("TextLabel")
+_0x2A.Size = UDim2.new(1, -20, 0, 55)
+_0x2A.Position = UDim2.new(0, 10, 0, 95)
+_0x2A.BackgroundColor3 = Color3.fromRGB(24, 24, 24)
+_0x2A.Text = "  I tried to do if something is missing\n  tell me or give me idea :3\n  i love cats 🐾"
+_0x2A.TextColor3 = Color3.fromRGB(200, 200, 200)
+_0x2A.TextSize = 12
+_0x2A.Font = Enum.Font.SourceSans
+_0x2A.TextXAlignment = Enum.TextXAlignment.Left
+_0x2A.TextYAlignment = Enum.TextYAlignment.Center
+_0x2A.Parent = _0x26
+local _0x2B = Instance.new("UICorner") _0x2B.CornerRadius = UDim.new(0, 6) _0x2B.Parent = _0x2A
 
--- Página 3: Extras Content
-local ExtrasContent = Instance.new("Frame")
-ExtrasContent.Size = UDim2.new(1, 0, 1, 0)
-ExtrasContent.BackgroundTransparency = 1
-ExtrasContent.Visible = false
-ExtrasContent.Parent = ContentContainer
+local _0x2C = Instance.new("Frame")
+_0x2C.Size = UDim2.new(1, 0, 1, 0)
+_0x2C.BackgroundTransparency = 1
+_0x2C.Visible = false
+_0x2C.Parent = _0x1B
 
-local ExtrasTitle = Instance.new("TextLabel")
-ExtrasTitle.Size = UDim2.new(1, 0, 0, 30)
-ExtrasTitle.Position = UDim2.new(0, 10, 0, 10)
-ExtrasTitle.BackgroundTransparency = 1
-ExtrasTitle.Text = "Extras & Utilidades"
-ExtrasTitle.TextColor3 = Color3.fromRGB(240, 240, 240)
-ExtrasTitle.TextSize = 16
-ExtrasTitle.Font = Enum.Font.SourceSansBold
-ExtrasTitle.TextXAlignment = Enum.TextXAlignment.Left
-ExtrasTitle.Parent = ExtrasContent
+local _0x2D = Instance.new("TextLabel")
+_0x2D.Size = UDim2.new(1, 0, 0, 30)
+_0x2D.Position = UDim2.new(0, 10, 0, 10)
+_0x2D.BackgroundTransparency = 1
+_0x2D.Text = "Extras & Utilidades"
+_0x2D.TextColor3 = Color3.fromRGB(240, 240, 240)
+_0x2D.TextSize = 16
+_0x2D.Font = Enum.Font.SourceSansBold
+_0x2D.TextXAlignment = Enum.TextXAlignment.Left
+_0x2D.Parent = _0x2C
 
--- Botão Noclip
-local NoclipButton = Instance.new("TextButton")
-NoclipButton.Size = UDim2.new(1, -20, 0, 32)
-NoclipButton.Position = UDim2.new(0, 10, 0, 50)
-NoclipButton.BackgroundColor3 = Color3.fromRGB(24, 24, 24)
-NoclipButton.Text = "  Noclip: [ OFF ]"
-NoclipButton.TextColor3 = Color3.fromRGB(200, 200, 200)
-NoclipButton.TextSize = 14
-NoclipButton.Font = Enum.Font.SourceSansBold
-NoclipButton.TextXAlignment = Enum.TextXAlignment.Left
-NoclipButton.Parent = ExtrasContent
+local _0x2E = Instance.new("TextButton")
+_0x2E.Size = UDim2.new(1, -20, 0, 32)
+_0x2E.Position = UDim2.new(0, 10, 0, 50)
+_0x2E.BackgroundColor3 = Color3.fromRGB(24, 24, 24)
+_0x2E.Text = "  Noclip: [ OFF ]"
+_0x2E.TextColor3 = Color3.fromRGB(200, 200, 200)
+_0x2E.TextSize = 14
+_0x2E.Font = Enum.Font.SourceSansBold
+_0x2E.TextXAlignment = Enum.TextXAlignment.Left
+_0x2E.Parent = _0x2C
 
-local NoclipCorner = Instance.new("UICorner")
-NoclipCorner.CornerRadius = UDim.new(0, 6)
-NoclipCorner.Parent = NoclipButton
+local _0x2F = Instance.new("UICorner")
+_0x2F.CornerRadius = UDim.new(0, 6)
+_0x2F.Parent = _0x2E
 
--- Botão Lateral para Reabrir
-local OpenButton = Instance.new("TextButton")
-OpenButton.Name = "OpenButton"
-OpenButton.Size = UDim2.new(0, 40, 0, 40)
-OpenButton.Position = UDim2.new(0, 10, 0.5, -20)
-OpenButton.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
-OpenButton.Text = "UI"
-OpenButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-OpenButton.TextSize = 14
-OpenButton.Font = Enum.Font.SourceSansBold
-OpenButton.Visible = false
-OpenButton.Parent = ScreenGui
+local _0x30 = Instance.new("TextButton")
+_0x30.Name = "OpenButton"
+_0x30.Size = UDim2.new(0, 40, 0, 40)
+_0x30.Position = UDim2.new(0, 10, 0.5, -20)
+_0x30.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+_0x30.Text = "UI"
+_0x30.TextColor3 = Color3.fromRGB(255, 255, 255)
+_0x30.TextSize = 14
+_0x30.Font = Enum.Font.SourceSansBold
+_0x30.Visible = false
+_0x30.Parent = _0x8
 
-local OpenUICorner = Instance.new("UICorner")
-OpenUICorner.CornerRadius = UDim.new(0, 8)
-OpenUICorner.Parent = OpenButton
+local _0x31 = Instance.new("UICorner")
+_0x31.CornerRadius = UDim.new(0, 8)
+_0x31.Parent = _0x30
 
--- Lógica ESP Player (Ciano Escuro)
-local espEnabled = false
-local highlights = {}
+local _0x32 = false
+local _0x33 = {}
 
-local function updateESPState()
-	for _, plr in ipairs(Players:GetPlayers()) do
-		if plr ~= Player then
-			if espEnabled then
-				if plr.Character and not highlights[plr] then
-					local hl = Instance.new("Highlight")
-					hl.Name = "ShizukaESP"
-					hl.FillColor = Color3.fromRGB(0, 139, 139)
-					hl.OutlineColor = Color3.fromRGB(255, 255, 255)
-					hl.FillTransparency = 0.5
-					hl.Parent = plr.Character
-					highlights[plr] = hl
+local function _0x34()
+	for _, _0x35 in ipairs(_0x1:GetPlayers()) do
+		if _0x35 ~= _0x6 then
+			if _0x32 then
+				if _0x35.Character and not _0x33[_0x35] then
+					local _0x36 = Instance.new("Highlight")
+					_0x36.Name = "ShizukaESP"
+					_0x36.FillColor = Color3.fromRGB(0, 139, 139)
+					_0x36.OutlineColor = Color3.fromRGB(255, 255, 255)
+					_0x36.FillTransparency = 0.5
+					_0x36.Parent = _0x35.Character
+					_0x33[_0x35] = _0x36
 				end
 			else
-				if highlights[plr] then
-					highlights[plr]:Destroy()
-					highlights[plr] = nil
+				if _0x33[_0x35] then
+					_0x33[_0x35]:Destroy()
+					_0x33[_0x35] = nil
 				end
 			end
 		end
 	end
 end
 
-Players.PlayerRemoving:Connect(function(plr)
-	if highlights[plr] then
-		highlights[plr]:Destroy()
-		highlights[plr] = nil
+_0x1.PlayerRemoving:Connect(function(_0x35)
+	if _0x33[_0x35] then
+		_0x33[_0x35]:Destroy()
+		_0x33[_0x35] = nil
 	end
 end)
 
-EspButton.MouseButton1Click:Connect(function()
-	espEnabled = not espEnabled
-	if espEnabled then
-		EspButton.Text = "  ESP Player: [ ON ]"
-		EspButton.TextColor3 = Color3.fromRGB(80, 255, 80)
+_0x1E.MouseButton1Click:Connect(function()
+	_0x32 = not _0x32
+	if _0x32 then
+		_0x1E.Text = "  ESP Player: [ ON ]"
+		_0x1E.TextColor3 = Color3.fromRGB(80, 255, 80)
 	else
-		EspButton.Text = "  ESP Player: [ OFF ]"
-		EspButton.TextColor3 = Color3.fromRGB(200, 200, 200)
+		_0x1E.Text = "  ESP Player: [ OFF ]"
+		_0x1E.TextColor3 = Color3.fromRGB(200, 200, 200)
 	end
-	updateESPState()
+	_0x34()
 end)
 
-RunService.RenderStepped:Connect(function()
-	if espEnabled then
-		for _, plr in ipairs(Players:GetPlayers()) do
-			if plr ~= Player and plr.Character and not highlights[plr] then
-				local hl = Instance.new("Highlight")
-				hl.Name = "ShizukaESP"
-				hl.FillColor = Color3.fromRGB(0, 139, 139)
-				hl.OutlineColor = Color3.fromRGB(255, 255, 255)
-				hl.FillTransparency = 0.5
-				hl.Parent = plr.Character
-				highlights[plr] = hl
+_0x3.RenderStepped:Connect(function()
+	if _0x32 then
+		for _, _0x35 in ipairs(_0x1:GetPlayers()) do
+			if _0x35 ~= _0x6 and _0x35.Character and not _0x33[_0x35] then
+				local _0x36 = Instance.new("Highlight")
+				_0x36.Name = "ShizukaESP"
+				_0x36.FillColor = Color3.fromRGB(0, 139, 139)
+				_0x36.OutlineColor = Color3.fromRGB(255, 255, 255)
+				_0x36.FillTransparency = 0.5
+				_0x36.Parent = _0x35.Character
+				_0x33[_0x35] = _0x36
 			end
 		end
 	end
 end)
 
--- Lógica ESP Mobs
-local mobEspEnabled = false
+local _0x37 = false
 
-local function clearMobESP()
-	local charsFolder = workspace:FindFirstChild("Characters")
-	if not charsFolder then return end
-	for _, v in ipairs(charsFolder:GetChildren()) do
-		local hl = v:FindFirstChild("AI_Highlight")
-		local ui = v:FindFirstChild("AI_HealthUI")
-		if hl then hl:Destroy() end
-		if ui then ui:Destroy() end
+local function _0x38()
+	local _0x39 = workspace:FindFirstChild("Characters")
+	if not _0x39 then return end
+	for _, _0x3A in ipairs(_0x39:GetChildren()) do
+		local _0x36 = _0x3A:FindFirstChild("AI_Highlight")
+		local _0x3B = _0x3A:FindFirstChild("AI_HealthUI")
+		if _0x36 then _0x36:Destroy() end
+		if _0x3B then _0x3B:Destroy() end
 	end
 end
 
-local function highlightAI(v)
-	if not mobEspEnabled or not v:FindFirstChild("AI") then
-		local hl = v:FindFirstChild("AI_Highlight")
-		local ui = v:FindFirstChild("AI_HealthUI")
-		if hl then hl:Destroy() end
-		if ui then ui:Destroy() end
+local function _0x3C(_0x3A)
+	if not _0x37 or not _0x3A:FindFirstChild("AI") then
+		local _0x36 = _0x3A:FindFirstChild("AI_Highlight")
+		local _0x3B = _0x3A:FindFirstChild("AI_HealthUI")
+		if _0x36 then _0x36:Destroy() end
+		if _0x3B then _0x3B:Destroy() end
 		return
 	end
 
-	if v:FindFirstChild("AI_Highlight") then return end
+	if _0x3A:FindFirstChild("AI_Highlight") then return end
 
-	local highlight = Instance.new("Highlight")
-	highlight.Name = "AI_Highlight"
-	highlight.Adornee = v
-	highlight.FillColor = Color3.fromRGB(255, 0, 0)
-	highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-	highlight.OutlineTransparency = 1
-	highlight.Parent = v
+	local _0x3D = Instance.new("Highlight")
+	_0x3D.Name = "AI_Highlight"
+	_0x3D.Adornee = _0x3A
+	_0x3D.FillColor = Color3.fromRGB(255, 0, 0)
+	_0x3D.OutlineColor = Color3.fromRGB(255, 255, 255)
+	_0x3D.OutlineTransparency = 1
+	_0x3D.Parent = _0x3A
 
-	local billboard = Instance.new("BillboardGui")
-	billboard.Name = "AI_HealthUI"
-	billboard.Adornee = v
-	billboard.Size = UDim2.new(0, 100, 0, 25)
-	billboard.StudsOffset = Vector3.new(0, 4, 0)
-	billboard.AlwaysOnTop = true
-	billboard.MaxDistance = 150
-	billboard.Parent = v
+	local _0x3E = Instance.new("BillboardGui")
+	_0x3E.Name = "AI_HealthUI"
+	_0x3E.Adornee = _0x3A
+	_0x3E.Size = UDim2.new(0, 100, 0, 25)
+	_0x3E.StudsOffset = Vector3.new(0, 4, 0)
+	_0x3E.AlwaysOnTop = true
+	_0x3E.MaxDistance = 150
+	_0x3E.Parent = _0x3A
 
-	local textLabel = Instance.new("TextLabel")
-	textLabel.Parent = billboard
-	textLabel.Size = UDim2.new(1, 0, 1, 0)
-	textLabel.BackgroundTransparency = 1
-	textLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
-	textLabel.TextStrokeTransparency = 0
-	textLabel.TextScaled = true
-	textLabel.Font = Enum.Font.SourceSansBold
+	local _0x3F = Instance.new("TextLabel")
+	_0x3F.Parent = _0x3E
+	_0x3F.Size = UDim2.new(1, 0, 1, 0)
+	_0x3F.BackgroundTransparency = 1
+	_0x3F.TextColor3 = Color3.fromRGB(255, 0, 0)
+	_0x3F.TextStrokeTransparency = 0
+	_0x3F.TextScaled = true
+	_0x3F.Font = Enum.Font.SourceSansBold
 
 	task.spawn(function()
-		local humanoid = v:FindFirstChildOfClass("Humanoid")
-		while mobEspEnabled and v and v.Parent and humanoid do
-			if humanoid.Health <= 0 then
-				if highlight then highlight:Destroy() end
-				if billboard then billboard:Destroy() end
+		local _0x40 = _0x3A:FindFirstChildOfClass("Humanoid")
+		while _0x37 and _0x3A and _0x3A.Parent and _0x40 do
+			if _0x40.Health <= 0 then
+				if _0x3D then _0x3D:Destroy() end
+				if _0x3E then _0x3E:Destroy() end
 				break
 			end
-			textLabel.Text = math.floor(humanoid.Health) .. " / " .. math.floor(humanoid.MaxHealth)
+			_0x3F.Text = math.floor(_0x40.Health) .. " / " .. math.floor(_0x40.MaxHealth)
 			task.wait(0.2)
 		end
 	end)
 end
 
-local function updateMobESPState()
-	local charsFolder = workspace:FindFirstChild("Characters")
-	if not charsFolder then return end
+local function _0x41()
+	local _0x39 = workspace:FindFirstChild("Characters")
+	if not _0x39 then return end
 
-	if mobEspEnabled then
-		for _, v in ipairs(charsFolder:GetChildren()) do
-			if v:FindFirstChild("AI") then
-				highlightAI(v)
+	if _0x37 then
+		for _, _0x3A in ipairs(_0x39:GetChildren()) do
+			if _0x3A:FindFirstChild("AI") then
+				_0x3C(_0x3A)
 			end
 		end
 	else
-		clearMobESP()
+		_0x38()
 	end
 end
 
 task.spawn(function()
-	local charsFolder = workspace:WaitForChild("Characters", 10)
-	if charsFolder then
-		charsFolder.ChildAdded:Connect(function(v)
+	local _0x39 = workspace:WaitForChild("Characters", 10)
+	if _0x39 then
+		_0x39.ChildAdded:Connect(function(_0x3A)
 			task.wait(0.1)
-			if mobEspEnabled and v:FindFirstChild("AI") then
-				highlightAI(v)
+			if _0x37 and _0x3A:FindFirstChild("AI") then
+				_0x3C(_0x3A)
 			end
 		end)
 	end
 end)
 
-EspMobsButton.MouseButton1Click:Connect(function()
-	mobEspEnabled = not mobEspEnabled
-	if mobEspEnabled then
-		EspMobsButton.Text = "  ESP Mobs: [ ON ]"
-		EspMobsButton.TextColor3 = Color3.fromRGB(80, 255, 80)
+_0x20.MouseButton1Click:Connect(function()
+	_0x37 = not _0x37
+	if _0x37 then
+		_0x20.Text = "  ESP Mobs: [ ON ]"
+		_0x20.TextColor3 = Color3.fromRGB(80, 255, 80)
 	else
-		EspMobsButton.Text = "  ESP Mobs: [ OFF ]"
-		EspMobsButton.TextColor3 = Color3.fromRGB(200, 200, 200)
+		_0x20.Text = "  ESP Mobs: [ OFF ]"
+		_0x20.TextColor3 = Color3.fromRGB(200, 200, 200)
 	end
-	updateMobESPState()
+	_0x41()
 end)
 
--- Lógica Fullbright
-local fullbrightEnabled = false
-local originalLighting = {
-	Brightness = Lighting.Brightness,
-	ClockTime = Lighting.ClockTime,
-	GlobalShadows = Lighting.GlobalShadows,
-	OutdoorAmbient = Lighting.OutdoorAmbient,
-	Ambient = Lighting.Ambient
+local _0x42 = false
+local _0x43 = {
+	Brightness = _0x4.Brightness,
+	ClockTime = _0x4.ClockTime,
+	GlobalShadows = _0x4.GlobalShadows,
+	OutdoorAmbient = _0x4.OutdoorAmbient,
+	Ambient = _0x4.Ambient
 }
 
-FullbrightButton.MouseButton1Click:Connect(function()
-	fullbrightEnabled = not fullbrightEnabled
-	if fullbrightEnabled then
-		FullbrightButton.Text = "  Fullbright: [ ON ]"
-		FullbrightButton.TextColor3 = Color3.fromRGB(80, 255, 80)
+_0x22.MouseButton1Click:Connect(function()
+	_0x42 = not _0x42
+	if _0x42 then
+		_0x22.Text = "  Fullbright: [ ON ]"
+		_0x22.TextColor3 = Color3.fromRGB(80, 255, 80)
 		
-		Lighting.GlobalShadows = false
-		Lighting.Brightness = 2
-		Lighting.ClockTime = 14
-		Lighting.OutdoorAmbient = Color3.fromRGB(200, 200, 200)
-		Lighting.Ambient = Color3.fromRGB(200, 200, 200)
+		_0x4.GlobalShadows = false
+		_0x4.Brightness = 2
+		_0x4.ClockTime = 14
+		_0x4.OutdoorAmbient = Color3.fromRGB(200, 200, 200)
+		_0x4.Ambient = Color3.fromRGB(200, 200, 200)
 	else
-		FullbrightButton.Text = "  Fullbright: [ OFF ]"
-		FullbrightButton.TextColor3 = Color3.fromRGB(200, 200, 200)
+		_0x22.Text = "  Fullbright: [ OFF ]"
+		_0x22.TextColor3 = Color3.fromRGB(200, 200, 200)
 		
-		Lighting.GlobalShadows = originalLighting.GlobalShadows
-		Lighting.Brightness = originalLighting.Brightness
-		Lighting.ClockTime = originalLighting.ClockTime
-		Lighting.OutdoorAmbient = originalLighting.OutdoorAmbient
-		Lighting.Ambient = originalLighting.Ambient
+		_0x4.GlobalShadows = _0x43.GlobalShadows
+		_0x4.Brightness = _0x43.Brightness
+		_0x4.ClockTime = _0x43.ClockTime
+		_0x4.OutdoorAmbient = _0x43.OutdoorAmbient
+		_0x4.Ambient = _0x43.Ambient
 	end
 end)
 
--- Lógica Third Person
-local thirdPersonEnabled = false
-local originalCameraMode = Player.CameraMode
-local originalMinZoom = Player.CameraMinZoomDistance
-local originalMaxZoom = Player.CameraMaxZoomDistance
+local _0x44 = false
+local _0x45 = _0x6.CameraMode
+local _0x46 = _0x6.CameraMinZoomDistance
+local _0x47 = _0x6.CameraMaxZoomDistance
 
-ThirdPersonButton.MouseButton1Click:Connect(function()
-	thirdPersonEnabled = not thirdPersonEnabled
-	if thirdPersonEnabled then
-		ThirdPersonButton.Text = "  Third Person: [ ON ]"
-		ThirdPersonButton.TextColor3 = Color3.fromRGB(80, 255, 80)
+_0x24.MouseButton1Click:Connect(function()
+	_0x44 = not _0x44
+	if _0x44 then
+		_0x24.Text = "  Third Person: [ ON ]"
+		_0x24.TextColor3 = Color3.fromRGB(80, 255, 80)
 		
-		originalCameraMode = Player.CameraMode
-		originalMinZoom = Player.CameraMinZoomDistance
-		originalMaxZoom = Player.CameraMaxZoomDistance
+		_0x45 = _0x6.CameraMode
+		_0x46 = _0x6.CameraMinZoomDistance
+		_0x47 = _0x6.CameraMaxZoomDistance
 		
-		Player.CameraMode = Enum.CameraMode.Classic
-		Player.CameraMinZoomDistance = 18
-		Player.CameraMaxZoomDistance = math.max(Player.CameraMaxZoomDistance, 18)
+		_0x6.CameraMode = Enum.CameraMode.Classic
+		_0x6.CameraMinZoomDistance = 18
+		_0x6.CameraMaxZoomDistance = math.max(_0x6.CameraMaxZoomDistance, 18)
 	else
-		ThirdPersonButton.Text = "  Third Person: [ OFF ]"
-		ThirdPersonButton.TextColor3 = Color3.fromRGB(200, 200, 200)
+		_0x24.Text = "  Third Person: [ OFF ]"
+		_0x24.TextColor3 = Color3.fromRGB(200, 200, 200)
 		
-		Player.CameraMode = originalCameraMode
-		Player.CameraMinZoomDistance = originalMinZoom
-		Player.CameraMaxZoomDistance = originalMaxZoom
+		_0x6.CameraMode = _0x45
+		_0x6.CameraMinZoomDistance = _0x46
+		_0x6.CameraMaxZoomDistance = _0x47
 	end
 end)
 
--- Lógica Noclip
-local noclipEnabled = false
+local _0x48 = false
 
-NoclipButton.MouseButton1Click:Connect(function()
-	noclipEnabled = not noclipEnabled
-	if noclipEnabled then
-		NoclipButton.Text = "  Noclip: [ ON ]"
-		NoclipButton.TextColor3 = Color3.fromRGB(80, 255, 80)
+_0x2E.MouseButton1Click:Connect(function()
+	_0x48 = not _0x48
+	if _0x48 then
+		_0x2E.Text = "  Noclip: [ ON ]"
+		_0x2E.TextColor3 = Color3.fromRGB(80, 255, 80)
 	else
-		NoclipButton.Text = "  Noclip: [ OFF ]"
-		NoclipButton.TextColor3 = Color3.fromRGB(200, 200, 200)
+		_0x2E.Text = "  Noclip: [ OFF ]"
+		_0x2E.TextColor3 = Color3.fromRGB(200, 200, 200)
 	end
 end)
 
-RunService.Stepped:Connect(function()
-	if noclipEnabled then
-		local character = Player.Character
-		if character then
-			for _, part in ipairs(character:GetDescendants()) do
-				if part:IsA("BasePart") then
-					part.CanCollide = false
+_0x3.Stepped:Connect(function()
+	if _0x48 then
+		local _0x49 = _0x6.Character
+		if _0x49 then
+			for _, _0x3A in ipairs(_0x49:GetDescendants()) do
+				if _0x3A:IsA("BasePart") then
+					_0x3A.CanCollide = false
 				end
 			end
 		end
 	end
 end)
 
--- Alternar Abas (Tabs)
-MainTabBtn.MouseButton1Click:Connect(function()
-	MainContent.Visible = true
-	InfoContent.Visible = false
-	ExtrasContent.Visible = false
+_0x15.MouseButton1Click:Connect(function()
+	_0x1C.Visible = true
+	_0x26.Visible = false
+	_0x2C.Visible = false
 	
-	MainTabBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
-	MainTabBtn.TextColor3 = Color3.fromRGB(240, 240, 240)
+	_0x15.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
+	_0x15.TextColor3 = Color3.fromRGB(240, 240, 240)
 	
-	InfoTabBtn.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
-	InfoTabBtn.TextColor3 = Color3.fromRGB(160, 160, 160)
+	_0x17.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+	_0x17.TextColor3 = Color3.fromRGB(160, 160, 160)
 	
-	ExtrasTabBtn.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
-	ExtrasTabBtn.TextColor3 = Color3.fromRGB(160, 160, 160)
+	_0x19.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+	_0x19.TextColor3 = Color3.fromRGB(160, 160, 160)
 end)
 
-InfoTabBtn.MouseButton1Click:Connect(function()
-	MainContent.Visible = false
-	InfoContent.Visible = true
-	ExtrasContent.Visible = false
+_0x17.MouseButton1Click:Connect(function()
+	_0x1C.Visible = false
+	_0x26.Visible = true
+	_0x2C.Visible = false
 	
-	InfoTabBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
-	InfoTabBtn.TextColor3 = Color3.fromRGB(240, 240, 240)
+	_0x17.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
+	_0x17.TextColor3 = Color3.fromRGB(240, 240, 240)
 	
-	MainTabBtn.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
-	MainTabBtn.TextColor3 = Color3.fromRGB(160, 160, 160)
+	_0x15.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+	_0x15.TextColor3 = Color3.fromRGB(160, 160, 160)
 	
-	ExtrasTabBtn.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
-	ExtrasTabBtn.TextColor3 = Color3.fromRGB(160, 160, 160)
+	_0x19.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+	_0x19.TextColor3 = Color3.fromRGB(160, 160, 160)
 end)
 
-ExtrasTabBtn.MouseButton1Click:Connect(function()
-	MainContent.Visible = false
-	InfoContent.Visible = false
-	ExtrasContent.Visible = true
+_0x19.MouseButton1Click:Connect(function()
+	_0x1C.Visible = false
+	_0x26.Visible = false
+	_0x2C.Visible = true
 	
-	ExtrasTabBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
-	ExtrasTabBtn.TextColor3 = Color3.fromRGB(240, 240, 240)
+	_0x19.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
+	_0x19.TextColor3 = Color3.fromRGB(240, 240, 240)
 	
-	MainTabBtn.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
-	MainTabBtn.TextColor3 = Color3.fromRGB(160, 160, 160)
+	_0x15.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+	_0x15.TextColor3 = Color3.fromRGB(160, 160, 160)
 	
-	InfoTabBtn.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
-	InfoTabBtn.TextColor3 = Color3.fromRGB(160, 160, 160)
+	_0x17.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+	_0x17.TextColor3 = Color3.fromRGB(160, 160, 160)
 end)
 
--- Animação UI
-local tweenInfo = TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+local _0x4A = TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
 
-local function toggleUI(isOpen)
-	if isOpen then
-		OpenButton.Visible = false
-		MainFrame.Visible = true
-		MainFrame.Size = UDim2.new(0, 0, 0, 0)
-		MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+local function _0x4B(_0x4C)
+	if _0x4C then
+		_0x30.Visible = false
+		_0x9.Visible = true
+		_0x9.Size = UDim2.new(0, 0, 0, 0)
+		_0x9.Position = UDim2.new(0.5, 0, 0.5, 0)
 		
-		local tween = TweenService:Create(MainFrame, tweenInfo, {
+		local _0x4D = _0x2:Create(_0x9, _0x4A, {
 			Size = UDim2.new(0, 480, 0, 320),
 			Position = UDim2.new(0.5, -240, 0.5, -160)
 		})
-		tween:Play()
+		_0x4D:Play()
 	else
-		local tween = TweenService:Create(MainFrame, tweenInfo, {
+		local _0x4D = _0x2:Create(_0x9, _0x4A, {
 			Size = UDim2.new(0, 0, 0, 0),
 			Position = UDim2.new(0.5, 0, 0.5, 0)
 		})
-		tween:Play()
-		tween.Completed:Connect(function()
-			MainFrame.Visible = false
-			OpenButton.Visible = true
+		_0x4D:Play()
+		_0x4D.Completed:Connect(function()
+			_0x9.Visible = false
+			_0x30.Visible = true
 		end)
 	end
 end
 
-CloseButton.MouseButton1Click:Connect(function()
-	toggleUI(false)
+_0x13.MouseButton1Click:Connect(function()
+	_0x4B(false)
 end)
 
-OpenButton.MouseButton1Click:Connect(function()
-	toggleUI(true)
+_0x30.MouseButton1Click:Connect(function()
+	_0x4B(true)
 end)
