@@ -31,7 +31,7 @@ ScreenGui.Name = "ShizukaExaminationUI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = PlayerGui
 
--- Janela Principal (Com AnchorPoint centralizado para o Zoom partir do meio)
+-- Janela Principal
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -64,7 +64,7 @@ local TitleLabel = Instance.new("TextLabel")
 TitleLabel.Size = UDim2.new(0, 220, 1, 0)
 TitleLabel.Position = UDim2.new(0, 15, 0, 0)
 TitleLabel.BackgroundTransparency = 1
-TitleLabel.Text = "SHIZUKA // OVERLAY"
+TitleLabel.Text = "SHIZUKA // REWORK"
 TitleLabel.TextColor3 = TACTICAL_ORANGE
 TitleLabel.TextSize = 14
 TitleLabel.Font = Enum.Font.GothamBold
@@ -389,6 +389,7 @@ end)
 
 -- ESP Mobs
 local mobEspEnabled = false
+local mobConnection = nil
 
 local function clearMobESP()
 	local charsFolder = workspace:FindFirstChild("Characters")
@@ -402,8 +403,14 @@ local function clearMobESP()
 end
 
 local function highlightAI(v)
-	if not mobEspEnabled or not v:FindFirstChild("AI") then return end
+	if not mobEspEnabled then return end
 	if v:FindFirstChild("AI_Highlight") then return end
+
+	local aiTag = v:FindFirstChild("AI") or v:WaitForChild("AI", 2)
+	if not aiTag then return end
+
+	local humanoid = v:FindFirstChildOfClass("Humanoid") or v:WaitForChild("Humanoid", 2)
+	if not humanoid or humanoid.Health <= 0 then return end
 
 	local highlight = Instance.new("Highlight")
 	highlight.Name = "AI_Highlight"
@@ -430,7 +437,6 @@ local function highlightAI(v)
 	textLabel.Font = Enum.Font.GothamBold
 
 	task.spawn(function()
-		local humanoid = v:FindFirstChildOfClass("Humanoid")
 		while mobEspEnabled and v and v.Parent and humanoid do
 			if humanoid.Health <= 0 then
 				if highlight then highlight:Destroy() end
@@ -446,11 +452,26 @@ end
 createTile(MainPage, "ESP Mobs", "ESP_MOB", "Identifica hostis e NPCs no mapa, exibindo barra de vida e localização em tempo real.", function(active)
 	mobEspEnabled = active
 	local charsFolder = workspace:FindFirstChild("Characters")
-	if mobEspEnabled and charsFolder then
-		for _, v in ipairs(charsFolder:GetChildren()) do
-			if v:FindFirstChild("AI") then highlightAI(v) end
+	
+	if mobEspEnabled then
+		if charsFolder then
+			for _, v in ipairs(charsFolder:GetChildren()) do
+				highlightAI(v)
+			end
+			
+			if not mobConnection then
+				mobConnection = charsFolder.ChildAdded:Connect(function(v)
+					if mobEspEnabled then
+						highlightAI(v)
+					end
+				end)
+			end
 		end
 	else
+		if mobConnection then
+			mobConnection:Disconnect()
+			mobConnection = nil
+		end
 		clearMobESP()
 	end
 end)
@@ -610,7 +631,7 @@ local infoText = Instance.new("TextLabel")
 infoText.Size = UDim2.new(1, -20, 1, -20)
 infoText.Position = UDim2.new(0, 10, 0, 10)
 infoText.BackgroundTransparency = 1
-infoText.Text = "DISCORD: shizuuw\nVERSION: 1.0 TACTICAL\n\nI tried to do if something is missing tell me or give me idea :3\ni love cats 🐾"
+infoText.Text = "DISCORD: shizuuw\nTWIN: Ant77\nVERSION: 1.0 TACTICAL\n\nI tried to do if something is missing tell me or give me idea :3\ni love cats 🐾"
 infoText.TextColor3 = TEXT_WHITE
 infoText.TextSize = 12
 infoText.Font = Enum.Font.Gotham
