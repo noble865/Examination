@@ -3,6 +3,7 @@ local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local Lighting = game:GetService("Lighting")
 local UserInputService = game:GetService("UserInputService")
+local SoundService = game:GetService("SoundService")
 
 local Player = Players.LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
@@ -10,6 +11,7 @@ local PlayerGui = Player:WaitForChild("PlayerGui")
 -- CONFIGURAÇÕES DE DISTÂNCIA E RECURSOS
 local MAX_HP_DISTANCE = 100 -- Distância máxima (em studs) para mostrar APENAS o HP dos Mobs
 local BACKGROUND_IMAGE_ID = "rbxassetid://13854737227" 
+local CLICK_SOUND_ID = "rbxassetid://535716488" -- ID do áudio de clique
 
 -- Cores e Transparências da Interface
 local DARK_BG = Color3.fromRGB(8, 10, 14)
@@ -53,6 +55,17 @@ local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "ShizukaExaminationUI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = PlayerGui
+
+-- Instância e função de som de clique
+local ClickSound = Instance.new("Sound")
+ClickSound.Name = "UIClickSound"
+ClickSound.SoundId = CLICK_SOUND_ID
+ClickSound.Volume = 0.5
+ClickSound.Parent = ScreenGui
+
+local function playClickSound()
+	SoundService:PlayLocalSound(ClickSound)
+end
 
 -- Janela Principal
 local MainFrame = Instance.new("Frame")
@@ -169,8 +182,15 @@ local ZoomOutBtn = createHeaderBtn("-", TEXT_WHITE)
 local ZoomInBtn = createHeaderBtn("+", TEXT_WHITE)
 local CloseButton = createHeaderBtn("X", COLOR_DISABLED)
 
-ZoomOutBtn.MouseButton1Click:Connect(function() animateScale(currentScale - 0.1) end)
-ZoomInBtn.MouseButton1Click:Connect(function() animateScale(currentScale + 0.1) end)
+ZoomOutBtn.MouseButton1Click:Connect(function() 
+	playClickSound()
+	animateScale(currentScale - 0.1) 
+end)
+
+ZoomInBtn.MouseButton1Click:Connect(function() 
+	playClickSound()
+	animateScale(currentScale + 0.1) 
+end)
 
 -- Arrastar Janela
 local dragging, dragInput, dragStart, startPos
@@ -410,6 +430,7 @@ local function createTile(parent, name, code, description, onClick)
 	tile.MouseEnter:Connect(function() updateDetails(name, description) end)
 	
 	toggleBtn.MouseButton1Click:Connect(function()
+		playClickSound()
 		state = not state
 		if state then
 			toggleBtn.BackgroundColor3 = COLOR_ENABLED
@@ -744,6 +765,7 @@ local function createKeybindTile(parent, name, currentKey, onRebind)
 	bindBtn.Parent = tile
 	
 	bindBtn.MouseButton1Click:Connect(function()
+		playClickSound()
 		bindBtn.Text = "[ PRESSIONE... ]"
 		bindBtn.TextColor3 = Color3.fromRGB(255, 200, 50)
 		onRebind(function(newKey)
@@ -780,6 +802,7 @@ createKeybindTile(KeybindPage, "THIRD PERSON KEY", tpToggleKey, function(setKey)
 end)
 
 local function switchTab(selectedBtn, pageName)
+	playClickSound()
 	for name, page in pairs(Pages) do
 		page.Visible = (name == pageName)
 	end
@@ -793,7 +816,10 @@ MainTabBtn.MouseButton1Click:Connect(function() switchTab(MainTabBtn, "Main") en
 ExtrasTabBtn.MouseButton1Click:Connect(function() switchTab(ExtrasTabBtn, "Extras") end)
 KeybindTabBtn.MouseButton1Click:Connect(function() switchTab(KeybindTabBtn, "Keybind") end)
 InfoTabBtn.MouseButton1Click:Connect(function() switchTab(InfoTabBtn, "Info") end)
-switchTab(MainTabBtn, "Main")
+
+-- Ativação inicial sem tocar som
+for name, page in pairs(Pages) do page.Visible = (name == "Main") end
+MainTabBtn.TextColor3 = TEXT_WHITE
 
 -- Botão Flutuante Lateral
 local OpenButton = Instance.new("ImageButton")
@@ -830,8 +856,15 @@ local function toggleUI(isOpen)
 	end
 end
 
-CloseButton.MouseButton1Click:Connect(function() toggleUI(false) end)
-OpenButton.MouseButton1Click:Connect(function() toggleUI(true) end)
+CloseButton.MouseButton1Click:Connect(function() 
+	playClickSound()
+	toggleUI(false) 
+end)
+
+OpenButton.MouseButton1Click:Connect(function() 
+	playClickSound()
+	toggleUI(true) 
+end)
 
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
 	if isBinding or isBindingTP or gameProcessed then return end
