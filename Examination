@@ -3,28 +3,51 @@ local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local Lighting = game:GetService("Lighting")
 local UserInputService = game:GetService("UserInputService")
+
 local Player = Players.LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
 
--- Cores do Tema (The Division / Tactical Orange)
-local TACTICAL_ORANGE = Color3.fromRGB(255, 102, 0)
-local DARK_BG = Color3.fromRGB(12, 12, 14)
-local PANEL_BG = Color3.fromRGB(18, 18, 22)
-local TILE_BG = Color3.fromRGB(24, 24, 28)
-local BORDER_COLOR = Color3.fromRGB(45, 45, 52)
-local TEXT_WHITE = Color3.fromRGB(235, 235, 235)
-local TEXT_MUTED = Color3.fromRGB(140, 140, 150)
+-- CONFIGURAÇÕES DE DISTÂNCIA E RECURSOS
+local MAX_HP_DISTANCE = 100 -- Distância máxima (em studs) para mostrar APENAS o HP dos Mobs
+local BACKGROUND_IMAGE_ID = "rbxassetid://13854737227" 
 
--- Teclas padrão
+-- Cores e Transparências da Interface
+local DARK_BG = Color3.fromRGB(8, 10, 14)
+local HEADER_BG = Color3.fromRGB(10, 12, 16)
+local PANEL_BG = Color3.fromRGB(12, 15, 22)
+local CARD_BG = Color3.fromRGB(16, 20, 28)
+local CARD_BAR = Color3.fromRGB(24, 30, 42)
+local BORDER_COLOR = Color3.fromRGB(40, 70, 90)
+local DARK_CYAN = Color3.fromRGB(0, 180, 195)
+local COLOR_ENABLED = Color3.fromRGB(50, 185, 120)
+local COLOR_DISABLED = Color3.fromRGB(225, 65, 80)
+local TEXT_WHITE = Color3.fromRGB(240, 240, 245)
+local TEXT_MUTED = Color3.fromRGB(140, 150, 170)
+
+-- Teclas e Escala
 local toggleKey = Enum.KeyCode.RightControl
 local tpToggleKey = Enum.KeyCode.V
 local isBinding = false
 local isBindingTP = false
 
--- Cleanup UI antiga
+local fullSize = UDim2.new(0, 640, 0, 400)
+local zeroSize = UDim2.new(0, 0, 0, 0)
+local currentScale = 1.0
+
+-- Limpeza de UIs antigas
 if PlayerGui:FindFirstChild("ShizukaExaminationUI") then
 	PlayerGui.ShizukaExaminationUI:Destroy()
 end
+if Lighting:FindFirstChild("ShizukaMenuBlur") then
+	Lighting.ShizukaMenuBlur:Destroy()
+end
+
+-- Desfocagem (Blur) no Fundo do Jogo
+local MenuBlur = Instance.new("BlurEffect")
+MenuBlur.Name = "ShizukaMenuBlur"
+MenuBlur.Size = 0
+MenuBlur.Enabled = true
+MenuBlur.Parent = Lighting
 
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "ShizukaExaminationUI"
@@ -35,60 +58,122 @@ ScreenGui.Parent = PlayerGui
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-MainFrame.Size = UDim2.new(0, 620, 0, 380)
+MainFrame.Size = fullSize
 MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
 MainFrame.BackgroundColor3 = DARK_BG
+MainFrame.BackgroundTransparency = 0.2
 MainFrame.BorderSizePixel = 0
 MainFrame.ClipsDescendants = true
 MainFrame.Parent = ScreenGui
 
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 10)
+MainCorner.Parent = MainFrame
+
 local MainStroke = Instance.new("UIStroke")
-MainStroke.Color = BORDER_COLOR
-MainStroke.Thickness = 1
+MainStroke.Color = DARK_CYAN
+MainStroke.Thickness = 1.2
+MainStroke.Transparency = 0.3
 MainStroke.Parent = MainFrame
+
+-- Textura de Fundo
+local BackgroundImage = Instance.new("ImageLabel")
+BackgroundImage.Name = "BackgroundImage"
+BackgroundImage.Size = UDim2.new(1, 0, 1, 0)
+BackgroundImage.Position = UDim2.new(0, 0, 0, 0)
+BackgroundImage.BackgroundTransparency = 1
+BackgroundImage.Image = BACKGROUND_IMAGE_ID
+BackgroundImage.ImageTransparency = 0.15
+BackgroundImage.ScaleType = Enum.ScaleType.Crop
+BackgroundImage.ZIndex = 1
+BackgroundImage.Parent = MainFrame
+
+-- Controle de Tamanho (Scale)
+local MainScale = Instance.new("UIScale")
+MainScale.Scale = currentScale
+MainScale.Parent = MainFrame
+
+local scaleTween = nil
+local function animateScale(newScale)
+	currentScale = math.clamp(newScale, 0.5, 1.4)
+	if scaleTween then scaleTween:Cancel() end
+	scaleTween = TweenService:Create(MainScale, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = currentScale })
+	scaleTween:Play()
+end
 
 -- Barra Superior (Header)
 local Header = Instance.new("Frame")
 Header.Name = "Header"
-Header.Size = UDim2.new(1, 0, 0, 45)
-Header.BackgroundColor3 = PANEL_BG
+Header.Size = UDim2.new(1, 0, 0, 42)
+Header.BackgroundColor3 = HEADER_BG
+Header.BackgroundTransparency = 0.4
 Header.BorderSizePixel = 0
+Header.ZIndex = 3
 Header.Parent = MainFrame
 
-local HeaderStroke = Instance.new("UIStroke")
-HeaderStroke.Color = BORDER_COLOR
-HeaderStroke.Thickness = 1
-HeaderStroke.Parent = Header
+local HeaderCorner = Instance.new("UICorner")
+HeaderCorner.CornerRadius = UDim.new(0, 10)
+HeaderCorner.Parent = Header
 
 local TitleLabel = Instance.new("TextLabel")
-TitleLabel.Size = UDim2.new(0, 220, 1, 0)
-TitleLabel.Position = UDim2.new(0, 15, 0, 0)
+TitleLabel.Size = UDim2.new(0, 180, 1, 0)
+TitleLabel.Position = UDim2.new(0, 12, 0, 0)
 TitleLabel.BackgroundTransparency = 1
-TitleLabel.Text = "SHIZUKA // REWORK"
-TitleLabel.TextColor3 = TACTICAL_ORANGE
-TitleLabel.TextSize = 14
+TitleLabel.Text = "SHIZU EXAMINATION"
+TitleLabel.TextColor3 = TEXT_WHITE
+TitleLabel.TextSize = 12
 TitleLabel.Font = Enum.Font.GothamBold
 TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+TitleLabel.ZIndex = 4
 TitleLabel.Parent = Header
 
--- Botão Fechar
-local CloseButton = Instance.new("TextButton")
-CloseButton.Size = UDim2.new(0, 35, 0, 35)
-CloseButton.Position = UDim2.new(1, -40, 0, 5)
-CloseButton.BackgroundTransparency = 1
-CloseButton.Text = "✕"
-CloseButton.TextColor3 = TEXT_MUTED
-CloseButton.TextSize = 16
-CloseButton.Font = Enum.Font.GothamBold
-CloseButton.Parent = Header
+-- Botões de Controle (+ / - / X)
+local ControlsContainer = Instance.new("Frame")
+ControlsContainer.Size = UDim2.new(0, 110, 1, 0)
+ControlsContainer.Position = UDim2.new(1, -115, 0, 0)
+ControlsContainer.BackgroundTransparency = 1
+ControlsContainer.ZIndex = 5
+ControlsContainer.Parent = Header
 
--- Sistema Draggable
-local dragging, dragInput, dragStart, startPos
-local function updateInput(input)
-	local delta = input.Position - dragStart
-	MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+local ControlsLayout = Instance.new("UIListLayout")
+ControlsLayout.FillDirection = Enum.FillDirection.Horizontal
+ControlsLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+ControlsLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+ControlsLayout.Padding = UDim.new(0, 5)
+ControlsLayout.Parent = ControlsContainer
+
+local function createHeaderBtn(text, color)
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(0, 26, 0, 26)
+	btn.BackgroundColor3 = CARD_BG
+	btn.BackgroundTransparency = 0.3
+	btn.Text = text
+	btn.TextColor3 = color or TEXT_MUTED
+	btn.TextSize = 13
+	btn.Font = Enum.Font.GothamBold
+	btn.ZIndex = 6
+	btn.Parent = ControlsContainer
+	
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 6)
+	corner.Parent = btn
+	
+	local stroke = Instance.new("UIStroke")
+	stroke.Color = BORDER_COLOR
+	stroke.Thickness = 1
+	stroke.Parent = btn
+	return btn
 end
 
+local ZoomOutBtn = createHeaderBtn("-", TEXT_WHITE)
+local ZoomInBtn = createHeaderBtn("+", TEXT_WHITE)
+local CloseButton = createHeaderBtn("X", COLOR_DISABLED)
+
+ZoomOutBtn.MouseButton1Click:Connect(function() animateScale(currentScale - 0.1) end)
+ZoomInBtn.MouseButton1Click:Connect(function() animateScale(currentScale + 0.1) end)
+
+-- Arrastar Janela
+local dragging, dragInput, dragStart, startPos
 Header.InputBegan:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 		dragging = true
@@ -107,37 +192,37 @@ Header.InputChanged:Connect(function(input)
 end)
 
 UserInputService.InputChanged:Connect(function(input)
-	if input == dragInput and dragging then updateInput(input) end
+	if input == dragInput and dragging then
+		local delta = input.Position - dragStart
+		MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+	end
 end)
 
--- Sistema de Abas no Topo
+-- Sistema de Abas
 local TabsContainer = Instance.new("Frame")
-TabsContainer.Size = UDim2.new(0, 320, 1, 0)
-TabsContainer.Position = UDim2.new(1, -360, 0, 0)
+TabsContainer.Size = UDim2.new(0, 220, 1, 0)
+TabsContainer.Position = UDim2.new(0, 195, 0, 0)
 TabsContainer.BackgroundTransparency = 1
+TabsContainer.ZIndex = 4
 TabsContainer.Parent = Header
 
 local UIListTabs = Instance.new("UIListLayout")
 UIListTabs.FillDirection = Enum.FillDirection.Horizontal
-UIListTabs.HorizontalAlignment = Enum.HorizontalAlignment.Right
+UIListTabs.HorizontalAlignment = Enum.HorizontalAlignment.Center
 UIListTabs.VerticalAlignment = Enum.VerticalAlignment.Center
-UIListTabs.Padding = UDim.new(0, 5)
+UIListTabs.Padding = UDim.new(0, 4)
 UIListTabs.Parent = TabsContainer
 
 local function createTabBtn(name)
 	local btn = Instance.new("TextButton")
-	btn.Size = UDim2.new(0, 70, 0, 28)
-	btn.BackgroundColor3 = TILE_BG
+	btn.Size = UDim2.new(0, 50, 0, 26)
+	btn.BackgroundTransparency = 1
 	btn.Text = name
 	btn.TextColor3 = TEXT_MUTED
-	btn.TextSize = 11
-	btn.Font = Enum.Font.GothamMedium
+	btn.TextSize = 10
+	btn.Font = Enum.Font.GothamBold
+	btn.ZIndex = 5
 	btn.Parent = TabsContainer
-	
-	local stroke = Instance.new("UIStroke")
-	stroke.Color = BORDER_COLOR
-	stroke.Thickness = 1
-	stroke.Parent = btn
 	return btn
 end
 
@@ -146,79 +231,79 @@ local ExtrasTabBtn = createTabBtn("EXTRAS")
 local KeybindTabBtn = createTabBtn("KEYS")
 local InfoTabBtn = createTabBtn("INFO")
 
--- Área de Conteúdo
+-- Conteúdo
 local BodyFrame = Instance.new("Frame")
-BodyFrame.Size = UDim2.new(1, -20, 1, -65)
-BodyFrame.Position = UDim2.new(0, 10, 0, 55)
+BodyFrame.Size = UDim2.new(1, -20, 1, -55)
+BodyFrame.Position = UDim2.new(0, 10, 0, 48)
 BodyFrame.BackgroundTransparency = 1
+BodyFrame.ZIndex = 3
 BodyFrame.Parent = MainFrame
 
--- Grid Esquerda (Módulos)
 local GridContainer = Instance.new("Frame")
-GridContainer.Size = UDim2.new(0, 380, 1, 0)
+GridContainer.Size = UDim2.new(0, 400, 1, 0)
 GridContainer.BackgroundTransparency = 1
+GridContainer.ZIndex = 3
 GridContainer.Parent = BodyFrame
 
--- Painel Direita (Detalhes)
+-- Painel Lateral Direto
 local DetailPanel = Instance.new("Frame")
 DetailPanel.Size = UDim2.new(0, 210, 1, 0)
 DetailPanel.Position = UDim2.new(1, -210, 0, 0)
 DetailPanel.BackgroundColor3 = PANEL_BG
+DetailPanel.BackgroundTransparency = 0.45
+DetailPanel.ZIndex = 3
 DetailPanel.Parent = BodyFrame
+
+local DetailCorner = Instance.new("UICorner")
+DetailCorner.CornerRadius = UDim.new(0, 8)
+DetailCorner.Parent = DetailPanel
 
 local DetailStroke = Instance.new("UIStroke")
 DetailStroke.Color = BORDER_COLOR
 DetailStroke.Thickness = 1
+DetailStroke.Transparency = 0.4
 DetailStroke.Parent = DetailPanel
 
 local DetailTitle = Instance.new("TextLabel")
 DetailTitle.Size = UDim2.new(1, -20, 0, 30)
-DetailTitle.Position = UDim2.new(0, 10, 0, 10)
+DetailTitle.Position = UDim2.new(0, 10, 0, 8)
 DetailTitle.BackgroundTransparency = 1
 DetailTitle.Text = "SELECIONE UM MÓDULO"
-DetailTitle.TextColor3 = TACTICAL_ORANGE
-DetailTitle.TextSize = 13
+DetailTitle.TextColor3 = DARK_CYAN
+DetailTitle.TextSize = 12
 DetailTitle.Font = Enum.Font.GothamBold
 DetailTitle.TextXAlignment = Enum.TextXAlignment.Left
+DetailTitle.ZIndex = 4
 DetailTitle.Parent = DetailPanel
 
 local DetailDivider = Instance.new("Frame")
 DetailDivider.Size = UDim2.new(1, -20, 0, 1)
-DetailDivider.Position = UDim2.new(0, 10, 0, 42)
-DetailDivider.BackgroundColor3 = TACTICAL_ORANGE
+DetailDivider.Position = UDim2.new(0, 10, 0, 38)
+DetailDivider.BackgroundColor3 = DARK_CYAN
 DetailDivider.BorderSizePixel = 0
+DetailDivider.ZIndex = 4
 DetailDivider.Parent = DetailPanel
 
 local DetailDesc = Instance.new("TextLabel")
-DetailDesc.Size = UDim2.new(1, -20, 0, 180)
-DetailDesc.Position = UDim2.new(0, 10, 0, 50)
+DetailDesc.Size = UDim2.new(1, -20, 0, 240)
+DetailDesc.Position = UDim2.new(0, 10, 0, 46)
 DetailDesc.BackgroundTransparency = 1
-DetailDesc.Text = "Passe o mouse ou clique em qualquer módulo para verificar as especificações do sistema."
+DetailDesc.Text = "Passe o mouse ou interaja com qualquer módulo para verificar as especificações do sistema."
 DetailDesc.TextColor3 = TEXT_WHITE
 DetailDesc.TextSize = 11
 DetailDesc.Font = Enum.Font.Gotham
 DetailDesc.TextXAlignment = Enum.TextXAlignment.Left
 DetailDesc.TextYAlignment = Enum.TextYAlignment.Top
 DetailDesc.TextWrapped = true
+DetailDesc.ZIndex = 4
 DetailDesc.Parent = DetailPanel
-
-local TechFooter = Instance.new("TextLabel")
-TechFooter.Size = UDim2.new(1, -20, 0, 20)
-TechFooter.Position = UDim2.new(0, 10, 1, -25)
-TechFooter.BackgroundTransparency = 1
-TechFooter.Text = "SHD-SYSTEM // READY"
-TechFooter.TextColor3 = TEXT_MUTED
-TechFooter.TextSize = 9
-TechFooter.Font = Enum.Font.Gotham
-TechFooter.TextXAlignment = Enum.TextXAlignment.Left
-TechFooter.Parent = DetailPanel
 
 local function updateDetails(title, desc)
 	DetailTitle.Text = string.upper(title)
 	DetailDesc.Text = desc
 end
 
--- Páginas de Grid
+-- Páginas das Abas
 local Pages = {}
 local function createGridPage(name)
 	local page = Instance.new("ScrollingFrame")
@@ -227,11 +312,12 @@ local function createGridPage(name)
 	page.BackgroundTransparency = 1
 	page.Visible = false
 	page.ScrollBarThickness = 2
-	page.ScrollBarImageColor3 = TACTICAL_ORANGE
+	page.ScrollBarImageColor3 = DARK_CYAN
+	page.ZIndex = 3
 	page.Parent = GridContainer
 	
 	local grid = Instance.new("UIGridLayout")
-	grid.CellSize = UDim2.new(0, 182, 0, 75)
+	grid.CellSize = UDim2.new(0, 185, 0, 105)
 	grid.CellPadding = UDim2.new(0, 10, 0, 10)
 	grid.Parent = page
 	
@@ -243,199 +329,255 @@ local MainPage = createGridPage("Main")
 local ExtrasPage = createGridPage("Extras")
 local KeybindPage = createGridPage("Keybind")
 
--- Aba Info
 local InfoPage = Instance.new("Frame")
 InfoPage.Name = "Info"
 InfoPage.Size = UDim2.new(1, 0, 1, 0)
 InfoPage.BackgroundTransparency = 1
 InfoPage.Visible = false
+InfoPage.ZIndex = 3
 InfoPage.Parent = GridContainer
 Pages["Info"] = InfoPage
 
+local infoCard = Instance.new("Frame")
+infoCard.Size = UDim2.new(1, 0, 1, 0)
+infoCard.BackgroundColor3 = CARD_BG
+infoCard.BackgroundTransparency = 0.4
+infoCard.ZIndex = 3
+infoCard.Parent = InfoPage
+
+local infoText = Instance.new("TextLabel")
+infoText.Size = UDim2.new(1, -20, 1, -20)
+infoText.Position = UDim2.new(0, 10, 0, 10)
+infoText.BackgroundTransparency = 1
+infoText.Text = "DISCORD: shizuuw\nTWIN: Ant77\nVERSION: 1.2 TACTICAL\n\ni love cats 🐾"
+infoText.TextColor3 = TEXT_WHITE
+infoText.TextSize = 12
+infoText.Font = Enum.Font.Gotham
+infoText.TextXAlignment = Enum.TextXAlignment.Left
+infoText.TextYAlignment = Enum.TextYAlignment.Top
+infoText.TextWrapped = true
+infoText.ZIndex = 4
+infoText.Parent = infoCard
+
 MainPage.Visible = true
 
--- Função para criar Módulos
+-- Construtor de Módulos (Cards)
 local function createTile(parent, name, code, description, onClick)
-	local tile = Instance.new("TextButton")
-	tile.BackgroundColor3 = TILE_BG
-	tile.Text = ""
+	local tile = Instance.new("Frame")
+	tile.BackgroundColor3 = CARD_BG
+	tile.BackgroundTransparency = 0.45
+	tile.ZIndex = 3
 	tile.Parent = parent
+	
+	local tileCorner = Instance.new("UICorner")
+	tileCorner.CornerRadius = UDim.new(0, 8)
+	tileCorner.Parent = tile
 	
 	local tileStroke = Instance.new("UIStroke")
 	tileStroke.Color = BORDER_COLOR
 	tileStroke.Thickness = 1
+	tileStroke.Transparency = 0.4
 	tileStroke.Parent = tile
 	
-	local accentBar = Instance.new("Frame")
-	accentBar.Size = UDim2.new(0, 4, 1, 0)
-	accentBar.BackgroundColor3 = BORDER_COLOR
-	accentBar.BorderSizePixel = 0
-	accentBar.Parent = tile
-	
 	local titleLbl = Instance.new("TextLabel")
-	titleLbl.Size = UDim2.new(1, -15, 0, 25)
-	titleLbl.Position = UDim2.new(0, 12, 0, 8)
+	titleLbl.Size = UDim2.new(1, 0, 0, 32)
+	titleLbl.Position = UDim2.new(0, 0, 0, 4)
 	titleLbl.BackgroundTransparency = 1
 	titleLbl.Text = name
 	titleLbl.TextColor3 = TEXT_WHITE
 	titleLbl.TextSize = 12
 	titleLbl.Font = Enum.Font.GothamBold
-	titleLbl.TextXAlignment = Enum.TextXAlignment.Left
+	titleLbl.ZIndex = 4
 	titleLbl.Parent = tile
 	
-	local statusBadge = Instance.new("TextLabel")
-	statusBadge.Size = UDim2.new(1, -15, 0, 20)
-	statusBadge.Position = UDim2.new(0, 12, 1, -25)
-	statusBadge.BackgroundTransparency = 1
-	statusBadge.Text = "[ OFF ]"
-	statusBadge.TextColor3 = TEXT_MUTED
-	statusBadge.TextSize = 10
-	statusBadge.Font = Enum.Font.Gotham
-	statusBadge.TextXAlignment = Enum.TextXAlignment.Left
-	statusBadge.Parent = tile
+	local toggleBtn = Instance.new("TextButton")
+	toggleBtn.Size = UDim2.new(1, -20, 0, 24)
+	toggleBtn.Position = UDim2.new(0, 10, 1, -30)
+	toggleBtn.BackgroundColor3 = COLOR_DISABLED
+	toggleBtn.BackgroundTransparency = 0.3
+	toggleBtn.Text = "DISABLED"
+	toggleBtn.TextColor3 = TEXT_WHITE
+	toggleBtn.TextSize = 10
+	toggleBtn.Font = Enum.Font.GothamBold
+	toggleBtn.ZIndex = 5
+	toggleBtn.Parent = tile
+	
+	local btnCorner = Instance.new("UICorner")
+	btnCorner.CornerRadius = UDim.new(0, 5)
+	btnCorner.Parent = toggleBtn
 	
 	local state = false
+	tile.MouseEnter:Connect(function() updateDetails(name, description) end)
 	
-	tile.MouseEnter:Connect(function()
-		updateDetails(name, description)
-	end)
-	
-	tile.MouseButton1Click:Connect(function()
+	toggleBtn.MouseButton1Click:Connect(function()
 		state = not state
 		if state then
-			tile.BackgroundColor3 = Color3.fromRGB(35, 25, 18)
-			tileStroke.Color = TACTICAL_ORANGE
-			accentBar.BackgroundColor3 = TACTICAL_ORANGE
-			statusBadge.Text = "[ ACTIVE ]"
-			statusBadge.TextColor3 = TACTICAL_ORANGE
+			toggleBtn.BackgroundColor3 = COLOR_ENABLED
+			toggleBtn.Text = "ENABLED"
+			tileStroke.Color = COLOR_ENABLED
 		else
-			tile.BackgroundColor3 = TILE_BG
+			toggleBtn.BackgroundColor3 = COLOR_DISABLED
+			toggleBtn.Text = "DISABLED"
 			tileStroke.Color = BORDER_COLOR
-			accentBar.BackgroundColor3 = BORDER_COLOR
-			statusBadge.Text = "[ OFF ]"
-			statusBadge.TextColor3 = TEXT_MUTED
 		end
-		if onClick then onClick(state, statusBadge, tile) end
+		if onClick then onClick(state, toggleBtn, tile) end
 	end)
 	
-	return tile, statusBadge
+	return tile, toggleBtn
 end
 
 -- =======================================================
--- LÓGICA DE FUNCIONALIDADES & MÓDULOS
+-- FILTRO RIGOROSO DE JOGADORES x MOBS
 -- =======================================================
+local function isPlayerCharacter(model)
+	if not model or not model:IsA("Model") then return true end
+	
+	-- 1. Checa se o serviço Players reconhece como jogador
+	if Players:GetPlayerFromCharacter(model) then return true end
+	
+	-- 2. Checa se é o próprio personagem do LocalPlayer (mesmo em menu)
+	if Player.Character and (model == Player.Character or model:IsDescendantOf(Player.Character)) then
+		return true
+	end
+	
+	-- 3. Comparação direta com a lista e nomes de todos os jogadores
+	for _, p in ipairs(Players:GetPlayers()) do
+		if p.Character and (model == p.Character or model:IsDescendantOf(p.Character)) then
+			return true
+		end
+		if model.Name == p.Name then
+			return true
+		end
+	end
+	
+	-- 4. Bloqueia Viewmodels de armas e câmeras do menu
+	local lowerName = model.Name:lower()
+	if lowerName:find("viewmodel") or lowerName:find("menu") or lowerName:find("camera") or lowerName:find("display") or lowerName:find("avatar") then
+		return true
+	end
+	
+	return false
+end
 
--- ESP Player
+-- =======================================================
+-- 1. ESP PLAYER (CIANO PARA JOGADORES REAIS)
+-- =======================================================
 local espEnabled = false
-local highlights = {}
+local playerHighlights = {}
 
-local function removeHighlight(plr)
-	if highlights[plr] then
-		highlights[plr]:Destroy()
-		highlights[plr] = nil
+local function removePlayerESP(plr)
+	if playerHighlights[plr] then
+		playerHighlights[plr]:Destroy()
+		playerHighlights[plr] = nil
 	end
 end
 
 local function applyPlayerESP(plr)
 	if not espEnabled or plr == Player then return end
 	local character = plr.Character
-	if not character then return end
-	if highlights[plr] and highlights[plr].Parent == character then return end
-	
-	removeHighlight(plr)
+	if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+
+	if playerHighlights[plr] and playerHighlights[plr].Parent == character then return end
+	removePlayerESP(plr)
 
 	local hl = Instance.new("Highlight")
-	hl.Name = "ShizukaESP"
-	hl.FillColor = TACTICAL_ORANGE
+	hl.Name = "ShizukaPlayerESP"
+	hl.FillColor = DARK_CYAN
 	hl.OutlineColor = Color3.fromRGB(255, 255, 255)
-	hl.FillTransparency = 0.5
+	hl.FillTransparency = 0.4
+	hl.OutlineTransparency = 0
+	hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
 	hl.Parent = character
-	highlights[plr] = hl
+
+	playerHighlights[plr] = hl
 end
 
 local function setupPlayer(plr)
 	if plr == Player then return end
 	plr.CharacterAdded:Connect(function()
 		task.wait(0.2)
-		removeHighlight(plr)
+		removePlayerESP(plr)
 		if espEnabled then applyPlayerESP(plr) end
 	end)
 end
 
 for _, plr in ipairs(Players:GetPlayers()) do setupPlayer(plr) end
 Players.PlayerAdded:Connect(setupPlayer)
-Players.PlayerRemoving:Connect(removeHighlight)
+Players.PlayerRemoving:Connect(removePlayerESP)
 
-createTile(MainPage, "ESP Player", "ESP_PLR", "Escaneia e rastreia o contorno de todos os jogadores ativos através das estruturas.", function(active)
+createTile(MainPage, "ESP Player", "ESP_PLR", "Escaneia e rastreia o contorno dos jogadores reais em tom ciano escuro através das estruturas.", function(active)
 	espEnabled = active
 	if espEnabled then
 		for _, plr in ipairs(Players:GetPlayers()) do applyPlayerESP(plr) end
 	else
-		for plr, _ in pairs(highlights) do removeHighlight(plr) end
+		for plr, _ in pairs(playerHighlights) do removePlayerESP(plr) end
 	end
 end)
 
-RunService.RenderStepped:Connect(function()
-	if espEnabled then
-		for _, plr in ipairs(Players:GetPlayers()) do
-			if plr ~= Player and plr.Character then
-				if not highlights[plr] or highlights[plr].Parent ~= plr.Character then
-					applyPlayerESP(plr)
-				end
-			end
-		end
-	end
-end)
-
--- ESP Mobs
+-- =======================================================
+-- 2. ESP MOBS (HIGHLIGHT DE LONGE, HP APENAS DE PERTO)
+-- =======================================================
 local mobEspEnabled = false
-local mobConnection = nil
 
 local function clearMobESP()
-	local charsFolder = workspace:FindFirstChild("Characters")
-	if not charsFolder then return end
-	for _, v in ipairs(charsFolder:GetChildren()) do
-		local hl = v:FindFirstChild("AI_Highlight")
-		local ui = v:FindFirstChild("AI_HealthUI")
-		if hl then hl:Destroy() end
-		if ui then ui:Destroy() end
+	for _, v in ipairs(workspace:GetDescendants()) do
+		if v.Name == "Mob_Highlight" or v.Name == "Mob_HealthUI" then
+			v:Destroy()
+		end
 	end
 end
 
 local function highlightAI(v)
-	if not mobEspEnabled then return end
-	if v:FindFirstChild("AI_Highlight") then return end
+	if not mobEspEnabled or not v:IsA("Model") then return end
+	
+	-- Bloqueia estritamente se for Jogador, Menu ou Viewmodel
+	if isPlayerCharacter(v) then 
+		if v:FindFirstChild("Mob_Highlight") then v.Mob_Highlight:Destroy() end
+		if v:FindFirstChild("Mob_HealthUI") then v.Mob_HealthUI:Destroy() end
+		return 
+	end
+	
+	if v:FindFirstChild("Mob_Highlight") then return end
 
-	local aiTag = v:FindFirstChild("AI") or v:WaitForChild("AI", 2)
-	if not aiTag then return end
-
-	local humanoid = v:FindFirstChildOfClass("Humanoid") or v:WaitForChild("Humanoid", 2)
+	local humanoid = v:FindFirstChildOfClass("Humanoid")
 	if not humanoid or humanoid.Health <= 0 then return end
 
+	local targetPart = v:FindFirstChild("HumanoidRootPart") or v:FindFirstChild("Head") or v.PrimaryPart or v:FindFirstChildWhichIsA("BasePart")
+	if not targetPart then return end
+
+	-- Highlight do mob ativado permanentemente à distância
 	local highlight = Instance.new("Highlight")
-	highlight.Name = "AI_Highlight"
+	highlight.Name = "Mob_Highlight"
 	highlight.Adornee = v
-	highlight.FillColor = Color3.fromRGB(255, 30, 30)
-	highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+	highlight.FillColor = Color3.fromRGB(255, 0, 0)
+	highlight.FillTransparency = 0.85
+	highlight.OutlineColor = Color3.fromRGB(255, 30, 30)
+	highlight.OutlineTransparency = 0
+	highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+	highlight.Enabled = true
 	highlight.Parent = v
 
+	-- BillboardGui para o texto do HP
 	local billboard = Instance.new("BillboardGui")
-	billboard.Name = "AI_HealthUI"
-	billboard.Adornee = v
-	billboard.Size = UDim2.new(0, 100, 0, 25)
-	billboard.StudsOffset = Vector3.new(0, 4, 0)
+	billboard.Name = "Mob_HealthUI"
+	billboard.Adornee = targetPart
+	billboard.Size = UDim2.new(0, 120, 0, 30)
+	billboard.StudsOffset = Vector3.new(0, 3.5, 0)
 	billboard.AlwaysOnTop = true
-	billboard.MaxDistance = 150
+	billboard.Enabled = false
 	billboard.Parent = v
 
 	local textLabel = Instance.new("TextLabel")
 	textLabel.Parent = billboard
 	textLabel.Size = UDim2.new(1, 0, 1, 0)
 	textLabel.BackgroundTransparency = 1
-	textLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
+	textLabel.TextColor3 = Color3.fromRGB(255, 60, 60)
+	textLabel.TextStrokeTransparency = 0
+	textLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
 	textLabel.TextScaled = true
 	textLabel.Font = Enum.Font.GothamBold
 
+	-- Loop individual para gerenciar visibilidade do HP com base na proximidade
 	task.spawn(function()
 		while mobEspEnabled and v and v.Parent and humanoid do
 			if humanoid.Health <= 0 then
@@ -443,40 +585,59 @@ local function highlightAI(v)
 				if billboard then billboard:Destroy() end
 				break
 			end
-			textLabel.Text = math.floor(humanoid.Health) .. " / " .. math.floor(humanoid.MaxHealth)
-			task.wait(0.2)
+
+			local camera = workspace.CurrentCamera
+			local myChar = Player.Character
+			local myPos = (myChar and (myChar:FindFirstChild("HumanoidRootPart") or myChar:FindFirstChild("Head"))) and myChar.HumanoidRootPart.Position or (camera and camera.CFrame.Position)
+
+			if myPos and targetPart then
+				local dist = (myPos - targetPart.Position).Magnitude
+				if dist <= MAX_HP_DISTANCE then
+					billboard.Enabled = true
+					textLabel.Text = math.floor(humanoid.Health) .. " / " .. math.floor(humanoid.MaxHealth)
+				else
+					billboard.Enabled = false
+				end
+			else
+				billboard.Enabled = false
+			end
+
+			task.wait(0.15)
 		end
 	end)
 end
 
-createTile(MainPage, "ESP Mobs", "ESP_MOB", "Identifica hostis e NPCs no mapa, exibindo barra de vida e localização em tempo real.", function(active)
+local function scanMobs()
+	if not mobEspEnabled then return end
+	for _, item in ipairs(workspace:GetDescendants()) do
+		if item:IsA("Model") and item:FindFirstChildOfClass("Humanoid") then
+			highlightAI(item)
+		end
+	end
+end
+
+createTile(MainPage, "ESP Mobs", "ESP_MOB", "Destaca o contorno vermelho dos Mobs no mapa e exibe suas barras de vida apenas quando estiver perto.", function(active)
 	mobEspEnabled = active
-	local charsFolder = workspace:FindFirstChild("Characters")
-	
 	if mobEspEnabled then
-		if charsFolder then
-			for _, v in ipairs(charsFolder:GetChildren()) do
-				highlightAI(v)
-			end
-			
-			if not mobConnection then
-				mobConnection = charsFolder.ChildAdded:Connect(function(v)
-					if mobEspEnabled then
-						highlightAI(v)
-					end
-				end)
-			end
-		end
+		scanMobs()
 	else
-		if mobConnection then
-			mobConnection:Disconnect()
-			mobConnection = nil
-		end
 		clearMobESP()
 	end
 end)
 
--- Fullbright
+-- Verificação periódica do mapa
+task.spawn(function()
+	while true do
+		if mobEspEnabled then
+			scanMobs()
+		end
+		task.wait(1.5)
+	end
+end)
+
+-- =======================================================
+-- 3. FULLBRIGHT
+-- =======================================================
 local fullbrightEnabled = false
 local origLighting = {
 	Brightness = Lighting.Brightness,
@@ -486,7 +647,7 @@ local origLighting = {
 	Ambient = Lighting.Ambient
 }
 
-createTile(MainPage, "Fullbright", "LIGHT_01", "Aumenta a luminosidade ambiental ao máximo e desativa sombras de iluminação.", function(active)
+createTile(MainPage, "Fullbright", "LIGHT_01", "Aumenta a luminosidade ambiental ao máximo.", function(active)
 	fullbrightEnabled = active
 	if fullbrightEnabled then
 		Lighting.GlobalShadows = false
@@ -503,7 +664,9 @@ createTile(MainPage, "Fullbright", "LIGHT_01", "Aumenta a luminosidade ambiental
 	end
 end)
 
--- Third Person
+-- =======================================================
+-- 4. EXTRAS (THIRD PERSON & NOCLIP)
+-- =======================================================
 local thirdPersonEnabled = false
 local origCamMode, origMinZoom, origMaxZoom
 
@@ -525,13 +688,12 @@ local function toggleThirdPerson(state)
 	end
 end
 
-createTile(MainPage, "Third Person", "CAM_TP", "Força a visão de câmera em terceira pessoa a uma distância otimizada.", function(active)
+createTile(ExtrasPage, "Third Person", "CAM_TP", "Força a visão de câmera em terceira pessoa.", function(active)
 	toggleThirdPerson(active)
 end)
 
--- Noclip (Aba Extras)
 local noclipEnabled = false
-createTile(ExtrasPage, "Noclip", "PHYS_01", "Desativa as colisões físicas do seu personagem com o mapa.", function(active)
+createTile(ExtrasPage, "Noclip", "PHYS_01", "Desativa as colisões físicas do seu personagem.", function(active)
 	noclipEnabled = active
 end)
 
@@ -543,16 +705,19 @@ RunService.Stepped:Connect(function()
 	end
 end)
 
--- Keybinds
+-- =======================================================
+-- KEYBINDS & SISTEMA DE ABAS
+-- =======================================================
 local function createKeybindTile(parent, name, currentKey, onRebind)
 	local tile = Instance.new("Frame")
-	tile.BackgroundColor3 = TILE_BG
+	tile.BackgroundColor3 = CARD_BG
+	tile.BackgroundTransparency = 0.45
+	tile.ZIndex = 3
 	tile.Parent = parent
 	
-	local tileStroke = Instance.new("UIStroke")
-	tileStroke.Color = BORDER_COLOR
-	tileStroke.Thickness = 1
-	tileStroke.Parent = tile
+	local tileCorner = Instance.new("UICorner")
+	tileCorner.CornerRadius = UDim.new(0, 8)
+	tileCorner.Parent = tile
 	
 	local titleLbl = Instance.new("TextLabel")
 	titleLbl.Size = UDim2.new(1, -10, 0, 25)
@@ -563,29 +728,27 @@ local function createKeybindTile(parent, name, currentKey, onRebind)
 	titleLbl.TextSize = 11
 	titleLbl.Font = Enum.Font.GothamBold
 	titleLbl.TextXAlignment = Enum.TextXAlignment.Left
+	titleLbl.ZIndex = 4
 	titleLbl.Parent = tile
 	
 	local bindBtn = Instance.new("TextButton")
 	bindBtn.Size = UDim2.new(1, -20, 0, 28)
 	bindBtn.Position = UDim2.new(0, 10, 0, 35)
 	bindBtn.BackgroundColor3 = PANEL_BG
+	bindBtn.BackgroundTransparency = 0.4
 	bindBtn.Text = "[ " .. currentKey.Name .. " ]"
-	bindBtn.TextColor3 = TACTICAL_ORANGE
+	bindBtn.TextColor3 = DARK_CYAN
 	bindBtn.TextSize = 11
 	bindBtn.Font = Enum.Font.GothamBold
+	bindBtn.ZIndex = 4
 	bindBtn.Parent = tile
-	
-	local btnStroke = Instance.new("UIStroke")
-	btnStroke.Color = BORDER_COLOR
-	btnStroke.Thickness = 1
-	btnStroke.Parent = bindBtn
 	
 	bindBtn.MouseButton1Click:Connect(function()
 		bindBtn.Text = "[ PRESSIONE... ]"
 		bindBtn.TextColor3 = Color3.fromRGB(255, 200, 50)
 		onRebind(function(newKey)
 			bindBtn.Text = "[ " .. newKey.Name .. " ]"
-			bindBtn.TextColor3 = TACTICAL_ORANGE
+			bindBtn.TextColor3 = DARK_CYAN
 		end)
 	end)
 end
@@ -616,50 +779,14 @@ createKeybindTile(KeybindPage, "THIRD PERSON KEY", tpToggleKey, function(setKey)
 	end)
 end)
 
--- Aba Info
-local infoCard = Instance.new("Frame")
-infoCard.Size = UDim2.new(1, 0, 1, 0)
-infoCard.BackgroundColor3 = TILE_BG
-infoCard.Parent = InfoPage
-
-local infoStroke = Instance.new("UIStroke")
-infoStroke.Color = BORDER_COLOR
-infoStroke.Thickness = 1
-infoStroke.Parent = infoCard
-
-local infoText = Instance.new("TextLabel")
-infoText.Size = UDim2.new(1, -20, 1, -20)
-infoText.Position = UDim2.new(0, 10, 0, 10)
-infoText.BackgroundTransparency = 1
-infoText.Text = "DISCORD: shizuuw\nTWIN: Ant77\nVERSION: 1.0 TACTICAL\n\nI tried to do if something is missing tell me or give me idea :3\ni love cats 🐾"
-infoText.TextColor3 = TEXT_WHITE
-infoText.TextSize = 12
-infoText.Font = Enum.Font.Gotham
-infoText.TextXAlignment = Enum.TextXAlignment.Left
-infoText.TextYAlignment = Enum.TextYAlignment.Top
-infoText.TextWrapped = true
-infoText.Parent = infoCard
-
--- Alternância de Abas
 local function switchTab(selectedBtn, pageName)
 	for name, page in pairs(Pages) do
 		page.Visible = (name == pageName)
 	end
 	
 	local btns = {MainTabBtn, ExtrasTabBtn, KeybindTabBtn, InfoTabBtn}
-	for _, b in ipairs(btns) do
-		b.TextColor3 = TEXT_MUTED
-		b.BackgroundColor3 = TILE_BG
-		b:FindFirstChildOfClass("UIStroke").Color = BORDER_COLOR
-	end
-	
-	selectedBtn.TextColor3 = TACTICAL_ORANGE
-	selectedBtn.BackgroundColor3 = PANEL_BG
-	selectedBtn:FindFirstChildOfClass("UIStroke").Color = TACTICAL_ORANGE
-
-	if pageName == "Info" then
-		updateDetails("Informações do Script", "Visualização dos dados do desenvolvedor e mensagem da versão.")
-	end
+	for _, b in ipairs(btns) do b.TextColor3 = TEXT_MUTED end
+	selectedBtn.TextColor3 = TEXT_WHITE
 end
 
 MainTabBtn.MouseButton1Click:Connect(function() switchTab(MainTabBtn, "Main") end)
@@ -668,44 +795,33 @@ KeybindTabBtn.MouseButton1Click:Connect(function() switchTab(KeybindTabBtn, "Key
 InfoTabBtn.MouseButton1Click:Connect(function() switchTab(InfoTabBtn, "Info") end)
 switchTab(MainTabBtn, "Main")
 
--- Botão Flutuante UI
-local OpenButton = Instance.new("TextButton")
+-- Botão Flutuante Lateral
+local OpenButton = Instance.new("ImageButton")
 OpenButton.Name = "OpenButton"
-OpenButton.Size = UDim2.new(0, 45, 0, 45)
-OpenButton.Position = UDim2.new(0, 15, 0.5, -22)
+OpenButton.Size = UDim2.new(0, 48, 0, 48)
+OpenButton.Position = UDim2.new(0, 15, 0.5, -24)
 OpenButton.BackgroundColor3 = DARK_BG
-OpenButton.Text = "SHD"
-OpenButton.TextColor3 = TACTICAL_ORANGE
-OpenButton.TextSize = 12
-OpenButton.Font = Enum.Font.GothamBold
+OpenButton.BackgroundTransparency = 0.2
+OpenButton.Image = "rbxassetid://6031097225"
+OpenButton.ImageColor3 = DARK_CYAN
+OpenButton.ScaleType = Enum.ScaleType.Fit
 OpenButton.Visible = false
 OpenButton.Parent = ScreenGui
 
-local OpenStroke = Instance.new("UIStroke")
-OpenStroke.Color = TACTICAL_ORANGE
-OpenStroke.Thickness = 1
-OpenStroke.Parent = OpenButton
-
--- Configurações e Animação de Zoom
-local fullSize = UDim2.new(0, 620, 0, 380)
-local zeroSize = UDim2.new(0, 0, 0, 0)
-
-local zoomInInfo = TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-local zoomOutInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+local OpenCorner = Instance.new("UICorner")
+OpenCorner.CornerRadius = UDim.new(0, 12)
+OpenCorner.Parent = OpenButton
 
 local function toggleUI(isOpen)
 	if isOpen then
 		OpenButton.Visible = false
 		MainFrame.Size = zeroSize
 		MainFrame.Visible = true
-		
-		TweenService:Create(MainFrame, zoomInInfo, {
-			Size = fullSize
-		}):Play()
+		TweenService:Create(MenuBlur, TweenInfo.new(0.3), { Size = 24 }):Play()
+		TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Size = fullSize }):Play()
 	else
-		local tw = TweenService:Create(MainFrame, zoomOutInfo, {
-			Size = zeroSize
-		})
+		TweenService:Create(MenuBlur, TweenInfo.new(0.2), { Size = 0 }):Play()
+		local tw = TweenService:Create(MainFrame, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.In), { Size = zeroSize })
 		tw:Play()
 		tw.Completed:Connect(function()
 			MainFrame.Visible = false
@@ -717,11 +833,8 @@ end
 CloseButton.MouseButton1Click:Connect(function() toggleUI(false) end)
 OpenButton.MouseButton1Click:Connect(function() toggleUI(true) end)
 
--- Escutador de Teclas do Teclado
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
-	if isBinding or isBindingTP then return end
-	if gameProcessed then return end
-	
+	if isBinding or isBindingTP or gameProcessed then return end
 	if input.UserInputType == Enum.UserInputType.Keyboard then
 		if input.KeyCode == toggleKey then
 			toggleUI(not MainFrame.Visible)
