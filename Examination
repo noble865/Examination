@@ -12,6 +12,7 @@ local PlayerGui = Player:WaitForChild("PlayerGui")
 local MAX_HP_DISTANCE = 100 -- Distância máxima (em studs) para mostrar APENAS o HP dos Mobs
 local BACKGROUND_IMAGE_ID = "rbxassetid://13854737227" 
 local CLICK_SOUND_ID = "rbxassetid://535716488" -- ID do áudio de clique
+local RESET_SOUND_ID = "rbxassetid://80804836827311" -- ID do áudio de reset
 
 -- Cores e Transparências da Interface
 local DARK_BG = Color3.fromRGB(8, 10, 14)
@@ -56,15 +57,25 @@ ScreenGui.Name = "ShizukaExaminationUI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = PlayerGui
 
--- Instância e função de som de clique
+-- Instâncias de Áudios
 local ClickSound = Instance.new("Sound")
 ClickSound.Name = "UIClickSound"
 ClickSound.SoundId = CLICK_SOUND_ID
 ClickSound.Volume = 0.5
 ClickSound.Parent = ScreenGui
 
+local ResetSound = Instance.new("Sound")
+ResetSound.Name = "UIResetSound"
+ResetSound.SoundId = RESET_SOUND_ID
+ResetSound.Volume = 0.7
+ResetSound.Parent = ScreenGui
+
 local function playClickSound()
 	SoundService:PlayLocalSound(ClickSound)
+end
+
+local function playResetSound()
+	SoundService:PlayLocalSound(ResetSound)
 end
 
 -- Janela Principal
@@ -453,15 +464,12 @@ end
 local function isPlayerCharacter(model)
 	if not model or not model:IsA("Model") then return true end
 	
-	-- 1. Checa se o serviço Players reconhece como jogador
 	if Players:GetPlayerFromCharacter(model) then return true end
 	
-	-- 2. Checa se é o próprio personagem do LocalPlayer (mesmo em menu)
 	if Player.Character and (model == Player.Character or model:IsDescendantOf(Player.Character)) then
 		return true
 	end
 	
-	-- 3. Comparação direta com a lista e nomes de todos os jogadores
 	for _, p in ipairs(Players:GetPlayers()) do
 		if p.Character and (model == p.Character or model:IsDescendantOf(p.Character)) then
 			return true
@@ -471,7 +479,6 @@ local function isPlayerCharacter(model)
 		end
 	end
 	
-	-- 4. Bloqueia Viewmodels de armas e câmeras do menu
 	local lowerName = model.Name:lower()
 	if lowerName:find("viewmodel") or lowerName:find("menu") or lowerName:find("camera") or lowerName:find("display") or lowerName:find("avatar") then
 		return true
@@ -551,7 +558,6 @@ end
 local function highlightAI(v)
 	if not mobEspEnabled or not v:IsA("Model") then return end
 	
-	-- Bloqueia estritamente se for Jogador, Menu ou Viewmodel
 	if isPlayerCharacter(v) then 
 		if v:FindFirstChild("Mob_Highlight") then v.Mob_Highlight:Destroy() end
 		if v:FindFirstChild("Mob_HealthUI") then v.Mob_HealthUI:Destroy() end
@@ -566,7 +572,6 @@ local function highlightAI(v)
 	local targetPart = v:FindFirstChild("HumanoidRootPart") or v:FindFirstChild("Head") or v.PrimaryPart or v:FindFirstChildWhichIsA("BasePart")
 	if not targetPart then return end
 
-	-- Highlight do mob ativado permanentemente à distância
 	local highlight = Instance.new("Highlight")
 	highlight.Name = "Mob_Highlight"
 	highlight.Adornee = v
@@ -578,7 +583,6 @@ local function highlightAI(v)
 	highlight.Enabled = true
 	highlight.Parent = v
 
-	-- BillboardGui para o texto do HP
 	local billboard = Instance.new("BillboardGui")
 	billboard.Name = "Mob_HealthUI"
 	billboard.Adornee = targetPart
@@ -598,7 +602,6 @@ local function highlightAI(v)
 	textLabel.TextScaled = true
 	textLabel.Font = Enum.Font.GothamBold
 
-	-- Loop individual para gerenciar visibilidade do HP com base na proximidade
 	task.spawn(function()
 		while mobEspEnabled and v and v.Parent and humanoid do
 			if humanoid.Health <= 0 then
@@ -646,7 +649,6 @@ createTile(MainPage, "ESP Mobs", "ESP_MOB", "Destaca o contorno vermelho dos Mob
 	end
 end)
 
--- Verificação periódica do mapa
 task.spawn(function()
 	while true do
 		if mobEspEnabled then
@@ -686,7 +688,34 @@ createTile(MainPage, "Fullbright", "LIGHT_01", "Aumenta a luminosidade ambiental
 end)
 
 -- =======================================================
--- 4. EXTRAS (THIRD PERSON & NOCLIP)
+-- 4. RESET PERSONAGEM
+-- =======================================================
+createTile(MainPage, "Reset", "RESET_01", "Elimina o seu personagem instantaneamente e executa o efeito sonoro de reset.", function(active, toggleBtn, tile)
+	if active then
+		playResetSound()
+		
+		local char = Player.Character
+		if char then
+			local humanoid = char:FindFirstChildOfClass("Humanoid")
+			if humanoid then
+				humanoid.Health = 0
+			end
+		end
+
+		-- Retorna o botão para o estado DISABLED automaticamente
+		task.delay(0.5, function()
+			if toggleBtn and toggleBtn.Parent then
+				toggleBtn.BackgroundColor3 = COLOR_DISABLED
+				toggleBtn.Text = "DISABLED"
+				local stroke = tile:FindFirstChildOfClass("UIStroke")
+				if stroke then stroke.Color = BORDER_COLOR end
+			end
+		end)
+	end
+end)
+
+-- =======================================================
+-- 5. EXTRAS (THIRD PERSON & NOCLIP)
 -- =======================================================
 local thirdPersonEnabled = false
 local origCamMode, origMinZoom, origMaxZoom
