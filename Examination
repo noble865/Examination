@@ -9,11 +9,15 @@ local Player = Players.LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
 
 -- CONFIGURAÇÕES DE DISTÂNCIA E RECURSOS
-local MAX_HP_DISTANCE = 100 -- Distância máxima (em studs) para mostrar APENAS o HP dos Mobs
+local MAX_HP_DISTANCE = 100 
 local BACKGROUND_IMAGE_ID = "rbxassetid://13854737227" 
-local CLICK_SOUND_ID = "rbxassetid://535716488" -- ID do áudio de clique
-local RESET_SOUND_ID = "rbxassetid://80804836827311" -- ID do áudio de reset
-local INTRO_SOUND_ID = "rbxassetid://93122684397641" -- ID do áudio de intro
+
+-- Imagem do Botão Mobile (Atualizada com o ID de textura 97793851580916)
+local MOBILE_BTN_IMAGE_ID = "rbxassetid://97793851580916"
+
+local CLICK_SOUND_ID = "rbxassetid://535716488" 
+local RESET_SOUND_ID = "rbxassetid://80804836827311" 
+local INTRO_SOUND_ID = "rbxassetid://93122684397641" 
 
 -- Cores e Transparências da Interface (Tema Preto e Branco Monocromático)
 local DARK_BG = Color3.fromRGB(10, 10, 10)
@@ -35,6 +39,7 @@ local toggleKey = Enum.KeyCode.RightControl
 local tpToggleKey = Enum.KeyCode.V
 local isBinding = false
 local isBindingTP = false
+local blurEnabled = true -- Controle do efeito de Blur
 
 local fullSize = UDim2.new(0, 640, 0, 400)
 local zeroSize = UDim2.new(0, 0, 0, 0)
@@ -584,13 +589,12 @@ local function highlightAI(v)
 	local targetPart = v:FindFirstChild("HumanoidRootPart") or v:FindFirstChild("Head") or v.PrimaryPart or v:FindFirstChildWhichIsA("BasePart")
 	if not targetPart then return end
 
-	-- Highlight do Mob em Vermelho Escuro
 	local highlight = Instance.new("Highlight")
 	highlight.Name = "Mob_Highlight"
 	highlight.Adornee = v
-	highlight.FillColor = Color3.fromRGB(120, 0, 0) -- Vermelho bem escuro no preenchimento
+	highlight.FillColor = Color3.fromRGB(120, 0, 0)
 	highlight.FillTransparency = 0.75
-	highlight.OutlineColor = Color3.fromRGB(180, 0, 0) -- Vermelho escuro no contorno
+	highlight.OutlineColor = Color3.fromRGB(180, 0, 0)
 	highlight.OutlineTransparency = 0
 	highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
 	highlight.Enabled = true
@@ -609,7 +613,7 @@ local function highlightAI(v)
 	textLabel.Parent = billboard
 	textLabel.Size = UDim2.new(1, 0, 1, 0)
 	textLabel.BackgroundTransparency = 1
-	textLabel.TextColor3 = Color3.fromRGB(200, 30, 30) -- Texto de vida em tom vermelho escuro
+	textLabel.TextColor3 = Color3.fromRGB(200, 30, 30)
 	textLabel.TextStrokeTransparency = 0
 	textLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
 	textLabel.TextScaled = true
@@ -728,7 +732,7 @@ createTile(MainPage, "Reset", "RESET_01", "Elimina o seu personagem instantaneam
 end)
 
 -- =======================================================
--- 5. EXTRAS (THIRD PERSON & NOCLIP)
+-- 5. EXTRAS (THIRD PERSON, NOCLIP & DISABLE BLUR)
 -- =======================================================
 local thirdPersonEnabled = false
 local origCamMode, origMinZoom, origMaxZoom
@@ -758,6 +762,18 @@ end)
 local noclipEnabled = false
 createTile(ExtrasPage, "Noclip", "PHYS_01", "Desativa as colisões físicas do seu personagem.", function(active)
 	noclipEnabled = active
+end)
+
+-- Módulo para Desativar o Blur no Fundo
+createTile(ExtrasPage, "Disable Blur", "BLUR_OFF", "Desativa o efeito de desfoque (blur) do fundo do jogo quando a interface está aberta.", function(active)
+	blurEnabled = not active
+	if not blurEnabled then
+		TweenService:Create(MenuBlur, TweenInfo.new(0.2), { Size = 0 }):Play()
+	else
+		if MainFrame.Visible then
+			TweenService:Create(MenuBlur, TweenInfo.new(0.3), { Size = 24 }):Play()
+		end
+	end
 end)
 
 RunService.Stepped:Connect(function()
@@ -862,15 +878,14 @@ InfoTabBtn.MouseButton1Click:Connect(function() switchTab(InfoTabBtn, "Info") en
 for name, page in pairs(Pages) do page.Visible = (name == "Main") end
 MainTabBtn.TextColor3 = TEXT_WHITE
 
--- Botão Flutuante Lateral
+-- Botão Flutuante Mobile
 local OpenButton = Instance.new("ImageButton")
 OpenButton.Name = "OpenButton"
-OpenButton.Size = UDim2.new(0, 48, 0, 48)
-OpenButton.Position = UDim2.new(0, 15, 0.5, -24)
+OpenButton.Size = UDim2.new(0, 52, 0, 52)
+OpenButton.Position = UDim2.new(0, 15, 0.5, -26)
 OpenButton.BackgroundColor3 = DARK_BG
 OpenButton.BackgroundTransparency = 0.2
-OpenButton.Image = "rbxassetid://6031097225"
-OpenButton.ImageColor3 = ACCENT_WHITE
+OpenButton.Image = MOBILE_BTN_IMAGE_ID
 OpenButton.ScaleType = Enum.ScaleType.Fit
 OpenButton.Visible = false
 OpenButton.Parent = ScreenGui
@@ -879,12 +894,22 @@ local OpenCorner = Instance.new("UICorner")
 OpenCorner.CornerRadius = UDim.new(0, 12)
 OpenCorner.Parent = OpenButton
 
+local OpenStroke = Instance.new("UIStroke")
+OpenStroke.Color = ACCENT_GREY
+OpenStroke.Thickness = 1.2
+OpenStroke.Transparency = 0.3
+OpenStroke.Parent = OpenButton
+
 local function toggleUI(isOpen)
 	if isOpen then
 		OpenButton.Visible = false
 		MainFrame.Size = zeroSize
 		MainFrame.Visible = true
-		TweenService:Create(MenuBlur, TweenInfo.new(0.3), { Size = 24 }):Play()
+		if blurEnabled then
+			TweenService:Create(MenuBlur, TweenInfo.new(0.3), { Size = 24 }):Play()
+		else
+			MenuBlur.Size = 0
+		end
 		TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Size = fullSize }):Play()
 	else
 		TweenService:Create(MenuBlur, TweenInfo.new(0.2), { Size = 0 }):Play()
@@ -919,27 +944,25 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 end)
 
 -- =======================================================
--- ANIMAÇÃO DE INTRODUÇÃO (SHIZUKA - PRETO E BRANCO ~4,5 A 5s)
+-- ANIMAÇÃO DE INTRODUÇÃO
 -- =======================================================
 local function playIntroAnimation()
-	-- Container central da intro
 	local IntroContainer = Instance.new("Frame")
 	IntroContainer.Name = "ShizukaIntroContainer"
 	IntroContainer.AnchorPoint = Vector2.new(0.5, 0.5)
 	IntroContainer.Position = UDim2.new(0.5, 0, 0.5, 0)
 	IntroContainer.Size = UDim2.new(0, 220, 0, 60)
-	IntroContainer.BackgroundTransparency = 1 -- Totalmente transparente
+	IntroContainer.BackgroundTransparency = 1
 	IntroContainer.ZIndex = 100
 	IntroContainer.Parent = ScreenGui
 
-	-- Texto da intro (Nome em estilo Preto e Branco)
 	local IntroText = Instance.new("TextLabel")
 	IntroText.Name = "ShizukaIntroText"
 	IntroText.Size = UDim2.new(1, 0, 0, 30)
 	IntroText.Position = UDim2.new(0, 0, 0, 0)
 	IntroText.BackgroundTransparency = 1
 	IntroText.Text = "shizuka"
-	IntroText.TextColor3 = Color3.fromRGB(255, 255, 255) -- Texto Branco
+	IntroText.TextColor3 = Color3.fromRGB(255, 255, 255)
 	IntroText.Font = Enum.Font.GothamBold
 	IntroText.TextSize = 26
 	IntroText.TextTransparency = 1
@@ -947,12 +970,11 @@ local function playIntroAnimation()
 	IntroText.Parent = IntroContainer
 
 	local IntroStroke = Instance.new("UIStroke")
-	IntroStroke.Color = Color3.fromRGB(0, 0, 0) -- Contorno Preto
+	IntroStroke.Color = Color3.fromRGB(0, 0, 0)
 	IntroStroke.Thickness = 2
 	IntroStroke.Transparency = 1
 	IntroStroke.Parent = IntroText
 
-	-- Fundo da Barra de Loading
 	local LoadingBackground = Instance.new("Frame")
 	LoadingBackground.Name = "LoadingBackground"
 	LoadingBackground.AnchorPoint = Vector2.new(0.5, 0)
@@ -974,7 +996,6 @@ local function playIntroAnimation()
 	LoadingBgStroke.Transparency = 1
 	LoadingBgStroke.Parent = LoadingBackground
 
-	-- Preenchimento da Barra de Loading (Branca)
 	local LoadingFill = Instance.new("Frame")
 	LoadingFill.Name = "LoadingFill"
 	LoadingFill.Size = UDim2.new(0, 0, 1, 0)
@@ -991,10 +1012,8 @@ local function playIntroAnimation()
 	IntroScale.Scale = 0.85
 	IntroScale.Parent = IntroContainer
 
-	-- Toca o som de introdução
 	SoundService:PlayLocalSound(IntroSound)
 
-	-- Animação: Fade-In (0.5s)
 	local fadeIn = TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
 	TweenService:Create(IntroText, fadeIn, { TextTransparency = 0 }):Play()
 	TweenService:Create(IntroStroke, fadeIn, { Transparency = 0 }):Play()
@@ -1002,15 +1021,12 @@ local function playIntroAnimation()
 	TweenService:Create(LoadingBgStroke, fadeIn, { Transparency = 0.5 }):Play()
 	TweenService:Create(IntroScale, fadeIn, { Scale = 1 }):Play()
 
-	-- Animação: Preenchimento da Barra (3.0s suave)
 	local loadingTween = TweenService:Create(LoadingFill, TweenInfo.new(3.0, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Size = UDim2.new(1, 0, 1, 0) })
 	loadingTween:Play()
 	loadingTween.Completed:Wait()
 
-	-- Pausa com a barra completa (0.5s)
 	task.wait(0.5)
 
-	-- Animação: Fade-Out (0.5s)
 	local fadeOut = TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
 	TweenService:Create(IntroText, fadeOut, { TextTransparency = 1 }):Play()
 	TweenService:Create(IntroStroke, fadeOut, { Transparency = 1 }):Play()
@@ -1023,7 +1039,6 @@ local function playIntroAnimation()
 
 	IntroContainer:Destroy()
 
-	-- Abre o menu principal ao concluir a introdução
 	toggleUI(true)
 end
 
