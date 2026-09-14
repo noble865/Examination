@@ -11,15 +11,13 @@ local PlayerGui = Player:WaitForChild("PlayerGui")
 -- CONFIGURAÇÕES DE DISTÂNCIA E RECURSOS
 local MAX_HP_DISTANCE = 100 
 local BACKGROUND_IMAGE_ID = "rbxassetid://13854737227" 
-
--- Imagem do Botão Mobile (Atualizada com o ID de textura 97793851580916)
 local MOBILE_BTN_IMAGE_ID = "rbxassetid://97793851580916"
 
 local CLICK_SOUND_ID = "rbxassetid://535716488" 
 local RESET_SOUND_ID = "rbxassetid://80804836827311" 
 local INTRO_SOUND_ID = "rbxassetid://93122684397641" 
 
--- Cores e Transparências da Interface (Tema Preto e Branco Monocromático)
+-- Cores e Transparências da Interface
 local DARK_BG = Color3.fromRGB(10, 10, 10)
 local HEADER_BG = Color3.fromRGB(16, 16, 16)
 local PANEL_BG = Color3.fromRGB(20, 20, 20)
@@ -37,9 +35,12 @@ local TEXT_MUTED = Color3.fromRGB(130, 130, 130)
 -- Teclas e Escala
 local toggleKey = Enum.KeyCode.RightControl
 local tpToggleKey = Enum.KeyCode.V
+local aimbotKey = Enum.KeyCode.E
 local isBinding = false
 local isBindingTP = false
-local blurEnabled = true -- Controle do efeito de Blur
+local isBindingAim = false
+local blurEnabled = true
+local wallCheckEnabled = true 
 
 local fullSize = UDim2.new(0, 640, 0, 400)
 local zeroSize = UDim2.new(0, 0, 0, 0)
@@ -166,7 +167,6 @@ TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
 TitleLabel.ZIndex = 4
 TitleLabel.Parent = Header
 
--- Botões de Controle (+ / - / X)
 local ControlsContainer = Instance.new("Frame")
 ControlsContainer.Size = UDim2.new(0, 110, 1, 0)
 ControlsContainer.Position = UDim2.new(1, -115, 0, 0)
@@ -244,7 +244,6 @@ UserInputService.InputChanged:Connect(function(input)
 	end
 end)
 
--- Sistema de Abas
 local TabsContainer = Instance.new("Frame")
 TabsContainer.Size = UDim2.new(0, 220, 1, 0)
 TabsContainer.Position = UDim2.new(0, 195, 0, 0)
@@ -277,7 +276,6 @@ local ExtrasTabBtn = createTabBtn("EXTRAS")
 local KeybindTabBtn = createTabBtn("KEYS")
 local InfoTabBtn = createTabBtn("INFO")
 
--- Conteúdo
 local BodyFrame = Instance.new("Frame")
 BodyFrame.Size = UDim2.new(1, -20, 1, -55)
 BodyFrame.Position = UDim2.new(0, 10, 0, 48)
@@ -291,7 +289,6 @@ GridContainer.BackgroundTransparency = 1
 GridContainer.ZIndex = 3
 GridContainer.Parent = BodyFrame
 
--- Painel Lateral Direto
 local DetailPanel = Instance.new("Frame")
 DetailPanel.Size = UDim2.new(0, 210, 1, 0)
 DetailPanel.Position = UDim2.new(1, -210, 0, 0)
@@ -349,7 +346,6 @@ local function updateDetails(title, desc)
 	DetailDesc.Text = desc
 end
 
--- Páginas das Abas
 local Pages = {}
 local function createGridPage(name)
 	local page = Instance.new("ScrollingFrame")
@@ -395,7 +391,7 @@ local infoText = Instance.new("TextLabel")
 infoText.Size = UDim2.new(1, -20, 1, -20)
 infoText.Position = UDim2.new(0, 10, 0, 10)
 infoText.BackgroundTransparency = 1
-infoText.Text = "DISCORD: shizuuw\nTWIN: Ant77\nVERSION: 1.2 MONOCHROME\n\ni love cats 🐾"
+infoText.Text = "DISCORD: shizuuw\nTWIN: Ant77\nVERSION: 1.4 OPTIMIZED\n\ni love cats 🐾"
 infoText.TextColor3 = TEXT_WHITE
 infoText.TextSize = 12
 infoText.Font = Enum.Font.Gotham
@@ -407,8 +403,7 @@ infoText.Parent = infoCard
 
 MainPage.Visible = true
 
--- Construtor de Módulos (Cards)
-local function createTile(parent, name, code, description, onClick)
+local function createTile(parent, name, code, description, onClick, defaultState)
 	local tile = Instance.new("Frame")
 	tile.BackgroundColor3 = CARD_BG
 	tile.BackgroundTransparency = 0.45
@@ -453,11 +448,8 @@ local function createTile(parent, name, code, description, onClick)
 	btnCorner.Parent = toggleBtn
 	
 	local state = false
-	tile.MouseEnter:Connect(function() updateDetails(name, description) end)
 	
-	toggleBtn.MouseButton1Click:Connect(function()
-		playClickSound()
-		state = not state
+	local function updateVisuals()
 		if state then
 			toggleBtn.BackgroundColor3 = COLOR_ENABLED
 			toggleBtn.TextColor3 = COLOR_ENABLED_TEXT
@@ -469,6 +461,19 @@ local function createTile(parent, name, code, description, onClick)
 			toggleBtn.Text = "DISABLED"
 			tileStroke.Color = BORDER_COLOR
 		end
+	end
+
+	if defaultState then
+		state = true
+		updateVisuals()
+	end
+
+	tile.MouseEnter:Connect(function() updateDetails(name, description) end)
+	
+	toggleBtn.MouseButton1Click:Connect(function()
+		playClickSound()
+		state = not state
+		updateVisuals()
 		if onClick then onClick(state, toggleBtn, tile) end
 	end)
 	
@@ -476,36 +481,195 @@ local function createTile(parent, name, code, description, onClick)
 end
 
 -- =======================================================
--- FILTRO RIGOROSO DE JOGADORES x MOBS
+-- SISTEMA DE PERFORMANCE E FILTRO
 -- =======================================================
 local function isPlayerCharacter(model)
 	if not model or not model:IsA("Model") then return true end
 	
 	if Players:GetPlayerFromCharacter(model) then return true end
-	
-	if Player.Character and (model == Player.Character or model:IsDescendantOf(Player.Character)) then
-		return true
-	end
+	if Player.Character and (model == Player.Character or model:IsDescendantOf(Player.Character)) then return true end
 	
 	for _, p in ipairs(Players:GetPlayers()) do
-		if p.Character and (model == p.Character or model:IsDescendantOf(p.Character)) then
-			return true
-		end
-		if model.Name == p.Name then
-			return true
-		end
+		if p.Character and (model == p.Character or model:IsDescendantOf(p.Character)) then return true end
+		if model.Name == p.Name then return true end
 	end
 	
 	local lowerName = model.Name:lower()
-	if lowerName:find("viewmodel") or lowerName:find("menu") or lowerName:find("camera") or lowerName:find("display") or lowerName:find("avatar") then
+	if lowerName:find("viewmodel") or lowerName:find("menu") or lowerName:find("camera") or lowerName:find("display") or lowerName:find("arm") then
 		return true
 	end
 	
 	return false
 end
 
+-- Cache de Mobs para evitar lag extremo
+local mobCache = {}
+local mobAimbotEnabled = false
+local mobEspEnabled = false
+
+task.spawn(function()
+	while true do
+		if mobAimbotEnabled or mobEspEnabled then
+			local newCache = {}
+			for _, descendant in ipairs(workspace:GetDescendants()) do
+				if descendant:IsA("Humanoid") and descendant.Health > 0 then
+					local mobModel = descendant:FindFirstAncestorOfClass("Model")
+					if mobModel and not isPlayerCharacter(mobModel) then
+						table.insert(newCache, mobModel)
+					end
+				end
+			end
+			mobCache = newCache
+		end
+		task.wait(1.5) -- Atualiza a lista apenas a cada 1.5 segundos para não lagar
+	end
+end)
+
+local function isPartVisible(targetPart, myChar)
+	if not wallCheckEnabled then return true end
+	
+	local camera = workspace.CurrentCamera
+	if not camera then return false end
+
+	local origin = camera.CFrame.Position
+	local direction = (targetPart.Position - origin)
+
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	
+	local ignoreTable = {camera}
+	if myChar then table.insert(ignoreTable, myChar) end
+	if targetPart.Parent then table.insert(ignoreTable, targetPart.Parent) end
+	
+	params.FilterDescendantsInstances = ignoreTable
+	params.IgnoreWater = true
+
+	local result = workspace:Raycast(origin, direction, params)
+	return result == nil
+end
+
+local function getMobTargetPart(mobModel)
+	return mobModel:FindFirstChild("Head") 
+		or mobModel:FindFirstChild("HumanoidRootPart") 
+		or mobModel:FindFirstChild("Torso")
+		or mobModel:FindFirstChild("UpperTorso")
+		or mobModel.PrimaryPart 
+		or mobModel:FindFirstChildWhichIsA("BasePart")
+end
+
 -- =======================================================
--- 1. ESP PLAYER (BRANCO MONOCROMÁTICO)
+-- SISTEMA DE AIMBOT MOBS
+-- =======================================================
+local mobAimbotActive = false
+local mobAimbotMaxDist = 400
+local currentTargetHead = nil
+
+local MobileAimbotBtn = Instance.new("TextButton")
+MobileAimbotBtn.Name = "MobileAimbotBtn"
+MobileAimbotBtn.Size = UDim2.new(0, 52, 0, 52)
+MobileAimbotBtn.Position = UDim2.new(1, -67, 0, 15)
+MobileAimbotBtn.BackgroundColor3 = DARK_BG
+MobileAimbotBtn.BackgroundTransparency = 0.2
+MobileAimbotBtn.Text = "AIM"
+MobileAimbotBtn.TextColor3 = COLOR_DISABLED_TEXT
+MobileAimbotBtn.TextSize = 11
+MobileAimbotBtn.Font = Enum.Font.GothamBold
+MobileAimbotBtn.Visible = false
+MobileAimbotBtn.ZIndex = 90
+MobileAimbotBtn.Parent = ScreenGui
+
+local MobileAimbotCorner = Instance.new("UICorner")
+MobileAimbotCorner.CornerRadius = UDim.new(0, 12)
+MobileAimbotCorner.Parent = MobileAimbotBtn
+
+local MobileAimbotStroke = Instance.new("UIStroke")
+MobileAimbotStroke.Color = BORDER_COLOR
+MobileAimbotStroke.Thickness = 1.2
+MobileAimbotStroke.Transparency = 0.3
+MobileAimbotStroke.Parent = MobileAimbotBtn
+
+local function updateMobileAimbotVisual()
+	if mobAimbotActive then
+		MobileAimbotBtn.BackgroundColor3 = COLOR_ENABLED
+		MobileAimbotBtn.TextColor3 = COLOR_ENABLED_TEXT
+		MobileAimbotStroke.Color = ACCENT_WHITE
+	else
+		MobileAimbotBtn.BackgroundColor3 = DARK_BG
+		MobileAimbotBtn.TextColor3 = COLOR_DISABLED_TEXT
+		MobileAimbotStroke.Color = BORDER_COLOR
+	end
+end
+
+MobileAimbotBtn.MouseButton1Click:Connect(function()
+	playClickSound()
+	mobAimbotActive = not mobAimbotActive
+	updateMobileAimbotVisual()
+end)
+
+-- Loop ultrarrápido porém leve (Lê apenas da lista cacheada)
+task.spawn(function()
+	while true do
+		-- AQUI ESTÁ A PRIMEIRA ALTERAÇÃO: Removido o "IsKeyDown"
+		if mobAimbotEnabled and mobAimbotActive then
+			local camera = workspace.CurrentCamera
+			local myChar = Player.Character
+			local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
+
+			if camera and myRoot then
+				local closestDist = mobAimbotMaxDist
+				local bestTarget = nil
+
+				for _, mobModel in ipairs(mobCache) do
+					if mobModel and mobModel.Parent then
+						local humanoid = mobModel:FindFirstChildOfClass("Humanoid")
+						if humanoid and humanoid.Health > 0 then
+							local targetPart = getMobTargetPart(mobModel)
+							if targetPart then
+								local dist = (myRoot.Position - targetPart.Position).Magnitude
+								if dist < closestDist then
+									if isPartVisible(targetPart, myChar) then
+										closestDist = dist
+										bestTarget = targetPart
+									end
+								end
+							end
+						end
+					end
+				end
+				currentTargetHead = bestTarget
+			else
+				currentTargetHead = nil
+			end
+		else
+			currentTargetHead = nil
+		end
+		task.wait(0.03)
+	end
+end)
+
+RunService.RenderStepped:Connect(function()
+	if mobAimbotEnabled and currentTargetHead and currentTargetHead.Parent then
+		local camera = workspace.CurrentCamera
+		if camera then
+			camera.CFrame = CFrame.new(camera.CFrame.Position, currentTargetHead.Position)
+		end
+	end
+end)
+
+createTile(MainPage, "Aimbot Mobs", "AIM_MOB", "Trava a câmera no mob mais próximo sem lag e sem atravessar paredes.", function(active)
+	mobAimbotEnabled = active
+	mobAimbotActive = false
+	currentTargetHead = nil
+	MobileAimbotBtn.Visible = active
+	updateMobileAimbotVisual()
+end)
+
+createTile(MainPage, "Wall Check", "WALL_CHK", "Verifica se há paredes bloqueando a visão antes de travar a mira.", function(active)
+	wallCheckEnabled = active
+end, true)
+
+-- =======================================================
+-- ESP PLAYER
 -- =======================================================
 local espEnabled = false
 local playerHighlights = {}
@@ -550,7 +714,7 @@ for _, plr in ipairs(Players:GetPlayers()) do setupPlayer(plr) end
 Players.PlayerAdded:Connect(setupPlayer)
 Players.PlayerRemoving:Connect(removePlayerESP)
 
-createTile(MainPage, "ESP Player", "ESP_PLR", "Escaneia e rastreia o contorno dos jogadores reais em tom branco através das estruturas.", function(active)
+createTile(MainPage, "ESP Player", "ESP_PLR", "Rastreia o contorno dos jogadores reais.", function(active)
 	espEnabled = active
 	if espEnabled then
 		for _, plr in ipairs(Players:GetPlayers()) do applyPlayerESP(plr) end
@@ -560,10 +724,8 @@ createTile(MainPage, "ESP Player", "ESP_PLR", "Escaneia e rastreia o contorno do
 end)
 
 -- =======================================================
--- 2. ESP MOBS (VERMELHO ESCURO)
+-- ESP MOBS
 -- =======================================================
-local mobEspEnabled = false
-
 local function clearMobESP()
 	for _, v in ipairs(workspace:GetDescendants()) do
 		if v.Name == "Mob_Highlight" or v.Name == "Mob_HealthUI" then
@@ -574,19 +736,12 @@ end
 
 local function highlightAI(v)
 	if not mobEspEnabled or not v:IsA("Model") then return end
-	
-	if isPlayerCharacter(v) then 
-		if v:FindFirstChild("Mob_Highlight") then v.Mob_Highlight:Destroy() end
-		if v:FindFirstChild("Mob_HealthUI") then v.Mob_HealthUI:Destroy() end
-		return 
-	end
-	
 	if v:FindFirstChild("Mob_Highlight") then return end
 
 	local humanoid = v:FindFirstChildOfClass("Humanoid")
 	if not humanoid or humanoid.Health <= 0 then return end
 
-	local targetPart = v:FindFirstChild("HumanoidRootPart") or v:FindFirstChild("Head") or v.PrimaryPart or v:FindFirstChildWhichIsA("BasePart")
+	local targetPart = getMobTargetPart(v)
 	if not targetPart then return end
 
 	local highlight = Instance.new("Highlight")
@@ -597,7 +752,6 @@ local function highlightAI(v)
 	highlight.OutlineColor = Color3.fromRGB(180, 0, 0)
 	highlight.OutlineTransparency = 0
 	highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-	highlight.Enabled = true
 	highlight.Parent = v
 
 	local billboard = Instance.new("BillboardGui")
@@ -627,9 +781,8 @@ local function highlightAI(v)
 				break
 			end
 
-			local camera = workspace.CurrentCamera
 			local myChar = Player.Character
-			local myPos = (myChar and (myChar:FindFirstChild("HumanoidRootPart") or myChar:FindFirstChild("Head"))) and myChar.HumanoidRootPart.Position or (camera and camera.CFrame.Position)
+			local myPos = myChar and myChar:FindFirstChild("HumanoidRootPart") and myChar.HumanoidRootPart.Position
 
 			if myPos and targetPart then
 				local dist = (myPos - targetPart.Position).Magnitude
@@ -642,25 +795,24 @@ local function highlightAI(v)
 			else
 				billboard.Enabled = false
 			end
-
-			task.wait(0.15)
+			task.wait(0.2)
 		end
 	end)
 end
 
-local function scanMobs()
+local function scanMobsESP()
 	if not mobEspEnabled then return end
-	for _, item in ipairs(workspace:GetDescendants()) do
-		if item:IsA("Model") and item:FindFirstChildOfClass("Humanoid") then
-			highlightAI(item)
+	for _, mobModel in ipairs(mobCache) do
+		if mobModel and mobModel.Parent then
+			highlightAI(mobModel)
 		end
 	end
 end
 
-createTile(MainPage, "ESP Mobs", "ESP_MOB", "Destaca os Mobs no mapa em tom vermelho escuro e exibe suas barras de vida apenas quando estiver perto.", function(active)
+createTile(MainPage, "ESP Mobs", "ESP_MOB", "Destaca os Mobs otimizado usando o sistema de cache.", function(active)
 	mobEspEnabled = active
 	if mobEspEnabled then
-		scanMobs()
+		scanMobsESP()
 	else
 		clearMobESP()
 	end
@@ -668,15 +820,13 @@ end)
 
 task.spawn(function()
 	while true do
-		if mobEspEnabled then
-			scanMobs()
-		end
-		task.wait(1.5)
+		if mobEspEnabled then scanMobsESP() end
+		task.wait(2)
 	end
 end)
 
 -- =======================================================
--- 3. FULLBRIGHT
+-- FULLBRIGHT
 -- =======================================================
 local fullbrightEnabled = false
 local origLighting = {
@@ -705,18 +855,14 @@ createTile(MainPage, "Fullbright", "LIGHT_01", "Aumenta a luminosidade ambiental
 end)
 
 -- =======================================================
--- 4. RESET PERSONAGEM
+-- RESET PERSONAGEM
 -- =======================================================
-createTile(MainPage, "Reset", "RESET_01", "Elimina o seu personagem instantaneamente e executa o efeito sonoro de reset.", function(active, toggleBtn, tile)
+createTile(MainPage, "Reset", "RESET_01", "Elimina o seu personagem instantaneamente.", function(active, toggleBtn, tile)
 	if active then
 		playResetSound()
-		
 		local char = Player.Character
-		if char then
-			local humanoid = char:FindFirstChildOfClass("Humanoid")
-			if humanoid then
-				humanoid.Health = 0
-			end
+		if char and char:FindFirstChildOfClass("Humanoid") then
+			char:FindFirstChildOfClass("Humanoid").Health = 0
 		end
 
 		task.delay(0.5, function()
@@ -732,7 +878,7 @@ createTile(MainPage, "Reset", "RESET_01", "Elimina o seu personagem instantaneam
 end)
 
 -- =======================================================
--- 5. EXTRAS (THIRD PERSON, NOCLIP & DISABLE BLUR)
+-- EXTRAS
 -- =======================================================
 local thirdPersonEnabled = false
 local origCamMode, origMinZoom, origMaxZoom
@@ -764,8 +910,7 @@ createTile(ExtrasPage, "Noclip", "PHYS_01", "Desativa as colisões físicas do s
 	noclipEnabled = active
 end)
 
--- Módulo para Desativar o Blur no Fundo
-createTile(ExtrasPage, "Disable Blur", "BLUR_OFF", "Desativa o efeito de desfoque (blur) do fundo do jogo quando a interface está aberta.", function(active)
+createTile(ExtrasPage, "Disable Blur", "BLUR_OFF", "Desativa o efeito de desfoque (blur) do fundo do jogo.", function(active)
 	blurEnabled = not active
 	if not blurEnabled then
 		TweenService:Create(MenuBlur, TweenInfo.new(0.2), { Size = 0 }):Play()
@@ -785,7 +930,7 @@ RunService.Stepped:Connect(function()
 end)
 
 -- =======================================================
--- KEYBINDS & SISTEMA DE ABAS
+-- KEYBINDS
 -- =======================================================
 local function createKeybindTile(parent, name, currentKey, onRebind)
 	local tile = Instance.new("Frame")
@@ -859,6 +1004,19 @@ createKeybindTile(KeybindPage, "THIRD PERSON KEY", tpToggleKey, function(setKey)
 	end)
 end)
 
+createKeybindTile(KeybindPage, "AIMBOT MOBS KEY", aimbotKey, function(setKey)
+	isBindingAim = true
+	local conn
+	conn = UserInputService.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.Keyboard then
+			aimbotKey = input.KeyCode
+			isBindingAim = false
+			setKey(aimbotKey)
+			conn:Disconnect()
+		end
+	end)
+end)
+
 local function switchTab(selectedBtn, pageName)
 	playClickSound()
 	for name, page in pairs(Pages) do
@@ -878,7 +1036,6 @@ InfoTabBtn.MouseButton1Click:Connect(function() switchTab(InfoTabBtn, "Info") en
 for name, page in pairs(Pages) do page.Visible = (name == "Main") end
 MainTabBtn.TextColor3 = TEXT_WHITE
 
--- Botão Flutuante Mobile
 local OpenButton = Instance.new("ImageButton")
 OpenButton.Name = "OpenButton"
 OpenButton.Size = UDim2.new(0, 52, 0, 52)
@@ -932,20 +1089,24 @@ OpenButton.MouseButton1Click:Connect(function()
 	toggleUI(true) 
 end)
 
+-- AQUI ESTÁ A SEGUNDA ALTERAÇÃO: Adicionado o "aimbotKey" para alternar
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
-	if isBinding or isBindingTP or gameProcessed then return end
+	if isBinding or isBindingTP or isBindingAim or gameProcessed then return end
 	if input.UserInputType == Enum.UserInputType.Keyboard then
 		if input.KeyCode == toggleKey then
 			toggleUI(not MainFrame.Visible)
 		elseif input.KeyCode == tpToggleKey then
 			toggleThirdPerson()
+		elseif input.KeyCode == aimbotKey then
+			if mobAimbotEnabled then
+				playClickSound()
+				mobAimbotActive = not mobAimbotActive
+				updateMobileAimbotVisual()
+			end
 		end
 	end
 end)
 
--- =======================================================
--- ANIMAÇÃO DE INTRODUÇÃO
--- =======================================================
 local function playIntroAnimation()
 	local IntroContainer = Instance.new("Frame")
 	IntroContainer.Name = "ShizukaIntroContainer"
@@ -1038,9 +1199,7 @@ local function playIntroAnimation()
 	task.wait(0.5)
 
 	IntroContainer:Destroy()
-
 	toggleUI(true)
 end
 
--- Inicia a intro ao executar
 task.spawn(playIntroAnimation)
